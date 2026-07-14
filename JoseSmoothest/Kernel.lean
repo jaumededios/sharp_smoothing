@@ -1,0 +1,22 @@
+import JoseSmoothest.Basic
+
+/-!
+# Difference and averaging operators
+
+This file bundles the forward difference and finite convolution as continuous
+linear operators on `ℓ²(ℤ)`.
+-/
+
+noncomputable section
+
+namespace JoseSmoothest
+
+/-- The forward difference `f(j + 1) - f(j)`, as a bounded operator on `ℓ²(ℤ)`. -/
+def differenceOperator : Sequence →L[ℝ] Sequence :=
+  (translation (-1)).toContinuousLinearMap - ContinuousLinearMap.id ℝ Sequence
+
+/-- Convolution by `u`, viewed as a bounded operator on `ℓ²(ℤ)`. -/
+def averagingOperator (u : Kernel) : Sequence →L[ℝ] Sequence :=
+  u.sum fun k a ↦ a • (translation k).toContinuousLinearMap
+
+end JoseSmoothest

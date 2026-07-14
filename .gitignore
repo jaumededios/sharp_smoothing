@@ -1,0 +1,16 @@
+# Lean / Lake build artifacts
+.lake/
+.proof-audit-tools/
+*.olean
+*.ilean
+*.c
+*.o
+
+# macOS and editor-local state
+.DS_Store
+.vscode/
+.idea/
+
+# Local assistant/tool state
+.codex/
+.claude/scheduled_tasks.lock

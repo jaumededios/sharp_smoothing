@@ -1,0 +1,130 @@
+version: "v0.3"
+
+project:
+  name: "JoseSmoothest"
+  authors:
+    - "Jaume de Dios Pont"
+    - "OpenAI Codex"
+  license: "UNLICENSED"
+
+sources:
+  - title: "The smoothest average and some extremal problems for polynomials"
+    authors:
+      - "José Gaitán"
+      - "Carlos Garzón"
+      - "José Madrid"
+    id: "arXiv:2604.25074v1"
+    type: "preprint"
+    license: "arXiv.org perpetual non-exclusive license"
+
+status:
+  scope: >-
+    Theorem 1.4 (the sharp fourth-difference inequality for normalized
+    symmetric kernels with nonnegative Fourier transform and its unique
+    equality case) and the supporting Proposition 1.6. The paper's other
+    derivative orders and Zolotarev-polynomial results are out of scope.
+  sorry_count: 2
+  sorry_in_definitions: 0
+  axioms:
+    - "propext"
+    - "Quot.sound"
+    - "Classical.choice"
+    - "sorryAx"
+  notes: >-
+    Both sorries and the resulting sorryAx occurrences are confined to the two
+    trusted statement declarations in the root Challenge.lean comparator
+    module. The mathematical formalization and Solution.lean are sorry-free.
+  main_results:
+    - declaration: "JoseSmoothest.smoothestAverage_inequality"
+      file: "JoseSmoothest/Challenge.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Quot.sound"
+        - "Classical.choice"
+      comparator_config: "Comparator/config.json"
+      literature_dependencies: []
+    - declaration: "JoseSmoothest.smoothestAverage_eq_iff"
+      file: "JoseSmoothest/Challenge.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Quot.sound"
+        - "Classical.choice"
+      comparator_config: "Comparator/config.json"
+      literature_dependencies: []
+
+automation:
+  methods:
+    - method: "agent"
+      models:
+        - "GPT-5"
+      framework: "OpenAI Codex"
+      tool_setup: >-
+        Lean 4 language-server tools, Mathlib v4.32.0, parallel Codex agents,
+        local shell builds, and leanprover/comparator with landrun.
+      cost:
+        wall_time: >-
+          Approximately 1 hour 34 minutes for the primary proof run, followed
+          by a separate comparator and repository-packaging pass.
+        spend_usd: "not reported"
+        hardware: "API-hosted model; local CPU Lean compilation"
+      prompting_notes: >-
+        The user requested a prerequisite audit, an eight-file natural-language
+        blueprint in one-to-one correspondence with the mathematical Lean
+        modules, a complete formalization, and independent comparator checking.
+  spend_usd: "not reported"
+  notes: >-
+    The proof was developed interactively with frequent Lean builds and LSP
+    diagnostics. Independent agent tracks handled several bounded subproofs
+    and audited the final blueprint and comparator surface.
+
+fidelity:
+  divergences: >-
+    Only Theorem 1.4 and its polynomial extremal prerequisite, Proposition
+    1.6, are formalized. Kernels are represented as finitely supported
+    functions on all of ℤ with an explicit support hypothesis, rather than as
+    functions whose domain is the finite interval. The sequence space is
+    Mathlib's real Lp space for counting measure, which realizes ℓ²(ℤ). The
+    hypotheses, sharp constant, optimizer, and equality coefficient formula
+    otherwise follow the paper's statements.
+
+review:
+  status: "self-assessed"
+  reviewers:
+    - "OpenAI Codex"
+  notes: >-
+    The project builds, the mathematical modules are sorry-free, and
+    leanprover/comparator accepts both main statements using only the listed
+    axioms and Lean's kernel. The source-to-Lean fidelity has not yet received
+    independent human peer review or author verification.
+
+alignment:
+  namespace: "JoseSmoothest"
+  statements:
+    - source: "Theorem 1.4, inequality (1.5)"
+      lean: "smoothestAverage_inequality"
+      module: "JoseSmoothest.Challenge"
+      status: "proved"
+      note: "Sharp fourth-order smoothness lower bound."
+    - source: "Theorem 1.4, equality formula (1.6)"
+      lean: "smoothestAverage_eq_iff"
+      module: "JoseSmoothest.Challenge"
+      status: "proved"
+      note: "Characterizes equality by the Chebyshev coefficient formula."
+    - source: "Proposition 1.6, inequality (1.7)"
+      lean: "weightedPolynomialNorm_ge"
+      module: "JoseSmoothest.WeightedExtremal"
+      status: "proved"
+      note: "Sharp weighted polynomial-norm inequality."
+    - source: "Proposition 1.6, equality formula (1.8)"
+      lean: "weightedPolynomialNorm_eq_iff"
+      module: "JoseSmoothest.WeightedExtremal"
+      status: "proved"
+      note: "Unique transformed-Chebyshev equality case."
+
+acknowledgements: >-
+  Built on Mathlib's analysis, Lp, Fourier, polynomial, and Chebyshev
+  libraries. Comparator validation uses leanprover/comparator, lean4export,
+  and landrun. The mathematical source is due to José Gaitán, Carlos Garzón,
+  and José Madrid.
