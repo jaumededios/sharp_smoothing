@@ -4,11 +4,15 @@ This repository has one comparator target:
 
 - `Comparator/config.json`
 
-The challenge module is `Showcase`, which imports the mathematical
-prerequisites but not the final proof module and states the two parts of
-Theorem 1.4 with intentional `sorry` bodies. The solution module is
-`Solution`, which repeats the same public surface and bridges it to
-`JoseSmoothest.Challenge`.
+The challenge module is `Showcase`, which imports the mathematical library
+but not the final `Solution` module. One imported module already contains an
+internal proof of the showcased sixth-order reduction; the comparator's role
+is to check that `Solution` exposes the exact requested statement surface and
+uses only the permitted axioms. `Showcase` defines the iterated difference
+operator and states four checked results with intentional `sorry` bodies: the
+inequality, equality characterization, unique attainment, and the sixth-order
+operator-to-polynomial reduction. The solution module repeats the same public
+surface and bridges it to the sorry-free mathematical library.
 
 Run the check with:
 

@@ -25,6 +25,27 @@ theorem IsAdmissibleKernel.kernelPolynomial
   eval_one :=
     kernelPolynomial_eval_one n u h.support h.symmetric h.sum_eq_one
 
+/-- The kernel obtained from the Chebyshev coefficients of the extremal
+polynomial in Proposition 1.6. -/
+def extremalKernel (n : ℕ) : Kernel :=
+  kernelOfPolynomial n (weightedExtremalPolynomial (n + 2))
+
+/-- The polynomial symbol of `extremalKernel` is the extremal polynomial. -/
+theorem kernelPolynomial_extremalKernel (n : ℕ) :
+    kernelPolynomial n (extremalKernel n) =
+      weightedExtremalPolynomial (n + 2) := by
+  apply kernelPolynomial_kernelOfPolynomial
+  simpa using weightedExtremalPolynomial_natDegree_le (n + 2) (by omega)
+
+/-- The coefficient-defined extremal kernel satisfies all four hypotheses of
+Theorem 1.4. -/
+theorem extremalKernel_isAdmissible (n : ℕ) :
+    IsAdmissibleKernel n (extremalKernel n) := by
+  apply kernelOfPolynomial_isAdmissible
+  · simpa using weightedExtremalPolynomial_natDegree_le (n + 2) (by omega)
+  · exact weightedExtremalPolynomial_nonnegative (n + 2) (by omega)
+  · exact weightedExtremalPolynomial_eval_one (n + 2) (by omega)
+
 /-- The explicit coefficient formula characterizing an equality case. -/
 def IsExtremalKernel (n : ℕ) (u : Kernel) : Prop :=
   ∀ m : ℕ, m ≤ n →
@@ -116,5 +137,54 @@ theorem smoothestAverage_eq_iff
     have hnorm :=
       (admissible.kernelPolynomial.norm_eq_iff (by omega)).2 hpolynomial
     linarith
+
+/-- The explicit coefficient-defined kernel satisfies the equality formula
+from Theorem 1.4. -/
+theorem extremalKernel_isExtremal (n : ℕ) :
+    IsExtremalKernel n (extremalKernel n) := by
+  apply (isExtremalKernel_iff_kernelPolynomial_eq n (extremalKernel n)
+    (extremalKernel_isAdmissible n).symmetric).2
+  exact kernelPolynomial_extremalKernel n
+
+/-- The coefficient-defined admissible kernel attains the sharp constant. -/
+theorem extremalKernel_attains (n : ℕ) :
+    fourthOrderSmoothness (extremalKernel n) = sharpConstant n := by
+  exact (smoothestAverage_eq_iff n (extremalKernel n)
+    (extremalKernel_isAdmissible n)).2 (extremalKernel_isExtremal n)
+
+/-- The sharp fourth-order constant is attained by an admissible kernel. -/
+theorem exists_extremalKernel (n : ℕ) :
+    ∃ u : Kernel,
+      IsAdmissibleKernel n u ∧
+        fourthOrderSmoothness u = sharpConstant n :=
+  ⟨extremalKernel n, extremalKernel_isAdmissible n,
+    extremalKernel_attains n⟩
+
+/-- Every admissible kernel attaining the sharp constant is the explicit
+coefficient-defined kernel. -/
+theorem eq_extremalKernel_of_attains
+    (n : ℕ)
+    (u : Kernel)
+    (admissible : IsAdmissibleKernel n u)
+    (attains : fourthOrderSmoothness u = sharpConstant n) :
+    u = extremalKernel n := by
+  apply kernel_eq_of_kernelPolynomial_eq n admissible.support
+    admissible.symmetric (extremalKernel_isAdmissible n).support
+    (extremalKernel_isAdmissible n).symmetric
+  have hextremal := (smoothestAverage_eq_iff n u admissible).1 attains
+  exact ((isExtremalKernel_iff_kernelPolynomial_eq n u
+    admissible.symmetric).1 hextremal).trans
+      (kernelPolynomial_extremalKernel n).symm
+
+/-- There is a unique admissible kernel attaining the sharp fourth-order
+constant. -/
+theorem existsUnique_extremalKernel (n : ℕ) :
+    ∃! u : Kernel,
+      IsAdmissibleKernel n u ∧
+        fourthOrderSmoothness u = sharpConstant n := by
+  refine ⟨extremalKernel n,
+    ⟨extremalKernel_isAdmissible n, extremalKernel_attains n⟩, ?_⟩
+  intro u hu
+  exact eq_extremalKernel_of_attains n u hu.1 hu.2
 
 end JoseSmoothest

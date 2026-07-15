@@ -2,11 +2,12 @@
 
 ## Purpose
 
-This module formalizes the exact Fourier-analytic identity used in equation
-(3.3) of the paper.  It identifies the operator norm of four forward
-differences after convolution with the supremum of the corresponding scalar
-multiplier.  Exact equality, rather than only a pointwise lower bound, is
-needed for the equality characterization in Theorem 1.4.
+This module proves the exact Fourier-analytic identity for every number of
+forward differences after convolution.  The fourth-order specialization is
+equation (3.3) of the paper, while the generic API also supplies the Fourier
+reduction for the sixth-order theorem.  Exact equality, rather than only a
+pointwise lower bound, is needed for the equality characterization in
+Theorem 1.4.
 
 ## Imports
 
@@ -58,6 +59,18 @@ theorem fourier_nonnegative {n : ℕ} {u : Kernel} (h : IsAdmissibleKernel n u) 
 
 end IsAdmissibleKernel
 
+/-- The operator norm of the `r`-fold forward difference after convolution by `u`. -/
+def differenceSmoothness (r : ℕ) (u : Kernel) : ℝ :=
+  ‖differenceAfterAveraging r u‖
+
+/-- The modulus of the `r`-fold difference multiplier at frequency `ξ`. -/
+def differenceMultiplier (r : ℕ) (u : Kernel) (ξ : ℝ) : ℝ :=
+  Real.sqrt (2 * (1 - Real.cos ξ)) ^ r * |kernelFourierTransform u ξ|
+
+/-- The supremum of the `r`-fold difference multiplier over all real frequencies. -/
+def differenceMultiplierNorm (r : ℕ) (u : Kernel) : ℝ :=
+  sSup {a : ℝ | ∃ ξ : ℝ, a = differenceMultiplier r u ξ}
+
 /-- The operator norm of `∇⁴` after convolution by `u`. -/
 def fourthOrderSmoothness (u : Kernel) : ℝ :=
   ‖(differenceOperator ^ 4).comp (averagingOperator u)‖
@@ -69,6 +82,47 @@ def fourthOrderMultiplier (u : Kernel) (ξ : ℝ) : ℝ :=
 /-- The supremum of the fourth-order multiplier over all real frequencies. -/
 def fourthOrderMultiplierNorm (u : Kernel) : ℝ :=
   sSup {r : ℝ | ∃ ξ : ℝ, r = fourthOrderMultiplier u ξ}
+
+/-- The generic smoothness at order four is the original fourth-order quantity. -/
+@[simp]
+theorem differenceSmoothness_four (u : Kernel) :
+    differenceSmoothness 4 u = fourthOrderSmoothness u
+
+/-- At even order `2 * m`, the difference weight is a polynomial in `cos ξ`. -/
+theorem differenceMultiplier_two_mul (m : ℕ) (u : Kernel) (ξ : ℝ) :
+    differenceMultiplier (2 * m) u ξ =
+      (2 * (1 - Real.cos ξ)) ^ m * |kernelFourierTransform u ξ|
+
+/-- The generic multiplier at order four is the original fourth-order multiplier. -/
+@[simp]
+theorem differenceMultiplier_four (u : Kernel) (ξ : ℝ) :
+    differenceMultiplier 4 u ξ = fourthOrderMultiplier u ξ
+
+/-- At order six, the difference weight is `8 * (1 - cos ξ) ^ 3`. -/
+@[simp]
+theorem differenceMultiplier_six (u : Kernel) (ξ : ℝ) :
+    differenceMultiplier 6 u ξ =
+      8 * (1 - Real.cos ξ) ^ 3 * |kernelFourierTransform u ξ|
+
+/-- The generic multiplier supremum at order four is the original one. -/
+@[simp]
+theorem differenceMultiplierNorm_four (u : Kernel) :
+    differenceMultiplierNorm 4 u = fourthOrderMultiplierNorm u
+
+/-- The norm of the `r`-fold difference after averaging equals its multiplier supremum. -/
+theorem differenceSmoothness_eq_multiplierNorm
+    (r : ℕ)
+    (u : Kernel)
+    (symmetric : ∀ k : ℤ, u (-k) = u k) :
+    differenceSmoothness r u = differenceMultiplierNorm r u
+
+/-- Every frequency supplies a lower bound for the iterated-difference operator norm. -/
+theorem differenceMultiplier_le_smoothness
+    (r : ℕ)
+    (u : Kernel)
+    (symmetric : ∀ k : ℤ, u (-k) = u k)
+    (ξ : ℝ) :
+    differenceMultiplier r u ξ ≤ differenceSmoothness r u
 
 /-- Equation (3.3): the operator norm equals the multiplier supremum. -/
 theorem fourthOrderSmoothness_eq_multiplierNorm
@@ -88,8 +142,8 @@ end JoseSmoothest
 
 ## Detailed proof blueprint
 
-Write `Aᵤ = (differenceOperator ^ 4).comp (averagingOperator u)` for the real
-fourth-order convolution operator.
+Write `Aᵣ,ᵤ = differenceAfterAveraging r u` for the real order-`r`
+convolution-difference operator.
 
 ### `kernelFourierTransform`
 
@@ -115,12 +169,39 @@ nonnegativity`.  Therefore the four conclusions are respectively `h.1`,
 `h.2.1`, `h.2.2.1`, and `h.2.2.2`.  These theorems expose stable dot notation,
 so downstream proofs do not depend on the conjunction's internal nesting.
 
+### `differenceSmoothness`
+
+The preceding module bundles `Aᵣ,ᵤ` as a continuous linear map.  Its operator
+norm is therefore already a real number, and this definition simply records
+that norm.  No positivity or symmetry assumption on the kernel is needed to
+form it.
+
+### `differenceMultiplier`
+
+One forward difference has complex Fourier symbol `exp(-Iξ) - 1`.  The square
+of its modulus is `2(1 - cos ξ)`, so its modulus is the nonnegative square
+root `sqrt(2(1 - cos ξ))`.  Raising this modulus to `r` accounts for the
+`r`-fold difference.  For a symmetric real kernel, the modulus of its complex
+symbol is `|kernelFourierTransform u ξ|`; multiplying the two factors gives
+the scalar multiplier modulus.
+
+The square-root formulation is valid for odd and even `r`.  In particular,
+it avoids the incorrect use of natural-number division in an expression such
+as `(2(1 - cos ξ))^(r / 2)`.
+
+### `differenceMultiplierNorm`
+
+Take the real supremum of the range of `differenceMultiplier r u`.  The range
+is later shown to be nonempty and bounded by identifying it pointwise with
+the norm of a continuous function on the compact circle.
+
 ### `fourthOrderSmoothness`
 
 Take the fourth power of the bounded forward-difference operator, compose it
 with convolution by `u`, and take the continuous-linear-map operator norm.
-This is exactly the left-hand quantity in equation (3.3); all boundedness is
-already carried by the bundled operators.
+This is exactly the left-hand quantity in equation (3.3).  The theorem
+`differenceSmoothness_four` later proves that it is the `r = 4`
+specialization of the generic definition.
 
 ### `fourthOrderMultiplier`
 
@@ -193,12 +274,12 @@ becomes multiplication by
 
 `kernelCircleSymbol u = Σ k, u(k) • fourier k`.
 
-Similarly, one difference becomes multiplication by `fourier (-1) - 1`, and
-induction on the power makes four differences multiplication by its fourth
-power.  Hence the complex version of `Aᵤ` is conjugate through
+Similarly, one difference becomes multiplication by `fourier (-1) - 1`.
+Induction on `r` shows that the `r`-fold difference becomes multiplication by
+its `r`th power.  Hence the complex version of `Aᵣ,ᵤ` is conjugate through
 `sequenceFourierEquiv` to multiplication by
 
-`fourthCircleSymbol u = (fourier (-1) - 1)^4 * kernelCircleSymbol u`.
+`orderCircleSymbol r u = (fourier (-1) - 1)^r * kernelCircleSymbol u`.
 
 Since the equivalence and its inverse preserve norms, applying the operator
 norm bound in both directions proves that the complex operator norm is the
@@ -209,10 +290,10 @@ constant in this identification.
 
 Pointwise `Complex.ofReal` defines a norm-preserving real-linear embedding of
 real counting-measure `L²` into complex `L²`.  Almost-everywhere pointwise
-calculations show that it intertwines translations, differences, finite
-convolution, and therefore the fourth-order operators.  Testing the complex
-operator on embedded real inputs proves that the real operator norm is at
-most the complex norm.
+calculations show that it intertwines translations, differences, every
+power of the difference operator, and finite convolution.  Testing the
+complex order-`r` operator on embedded real inputs proves that the real
+operator norm is at most the complex norm.
 
 Conversely, decompose a complex input into the embedded real and imaginary
 parts.  The operator has real coefficients, so it acts on the two components
@@ -237,28 +318,87 @@ The elementary complex-norm identity
 
 `‖fourier (-1) ξ - 1‖² = 2(1 - cos ξ)`
 
-then gives
-`‖fourthCircleSymbol u ξ‖ = fourthOrderMultiplier u ξ`.  The multiplier
-range is nonempty, using `ξ = 0`, and is bounded above by the continuous-map
-norm.  For one inequality between that norm and the range supremum, lift an
-arbitrary circle point to a real representative and use `le_csSup`; for the
-other, use `csSup_le` and the pointwise continuous-map norm bound.  Thus
-`‖fourthCircleSymbol u‖ = fourthOrderMultiplierNorm u`.
+and nonnegativity of a norm give
+
+`‖fourier (-1) ξ - 1‖ = sqrt(2(1 - cos ξ))`
+
+through `Real.sqrt_sq`.  Taking the `r`th power and multiplying by the kernel
+symbol norm proves
+
+`‖orderCircleSymbol r u ξ‖ = differenceMultiplier r u ξ`.
+
+The multiplier range is nonempty, using `ξ = 0`, and is bounded above by the
+continuous-map norm.  For one inequality between that norm and the range
+supremum, lift an arbitrary circle point to a real representative and use
+`le_csSup`; for the other, use `csSup_le` and the pointwise continuous-map
+norm bound.  Thus
+
+`‖orderCircleSymbol r u‖ = differenceMultiplierNorm r u`.
+
+### `differenceSmoothness_four`
+
+Unfold `differenceSmoothness`, `differenceAfterAveraging`, and
+`fourthOrderSmoothness`.  Both sides reduce definitionally to the norm of
+`(differenceOperator ^ 4).comp (averagingOperator u)`, so reflexivity proves
+the equality.  The `[simp]` attribute makes the legacy fourth-order API a
+convenient normal form.
+
+### `differenceMultiplier_two_mul`
+
+Set `x = 2(1 - cos ξ)`.  Since `cos ξ ≤ 1`, one has `0 ≤ x`.  Use
+`pow_mul` to rewrite `(sqrt x)^(2m)` as `((sqrt x)^2)^m`, then use
+`Real.sq_sqrt` to replace `(sqrt x)^2` by `x`.  The kernel-symbol absolute
+value is unchanged, giving the stated polynomial formula for every even
+order.
+
+### `differenceMultiplier_four`
+
+Specialize `differenceMultiplier_two_mul` to `m = 2`.  Ring normalization
+changes `(2(1 - cos ξ))^2` into `4(1 - cos ξ)^2`, exactly the defining
+formula for `fourthOrderMultiplier`.  Mark the result as a simplification
+lemma for backward compatibility.
+
+### `differenceMultiplier_six`
+
+Specialize `differenceMultiplier_two_mul` to `m = 3`.  Expanding the scalar
+power of two gives `2^3 = 8`, hence the order-six weight is
+`8(1 - cos ξ)^3`.  This is the Fourier weight needed to reduce the paper's
+sixth-order theorem to its cubic weighted-polynomial problem.
+
+### `differenceMultiplierNorm_four`
+
+Unfold both supremum definitions.  The preceding pointwise order-four
+identity rewrites every witness in the generic range to the corresponding
+`fourthOrderMultiplier` value.  The two sets are therefore definitionally
+equal after simplification, and their suprema agree.
+
+### `differenceSmoothness_eq_multiplierNorm`
+
+Unfold `differenceSmoothness`.  The real/complex comparison replaces
+`‖Aᵣ,ᵤ‖` by the norm of `complexOrderOperator r u`.  Fourier intertwining and
+the exact multiplication norm replace this with `‖orderCircleSymbol r u‖`.
+The circle-symbol supremum calculation then gives
+`differenceMultiplierNorm r u`.  Chaining these three equalities proves the
+generic norm identity.
+
+### `differenceMultiplier_le_smoothness`
+
+Rewrite the multiplier value as the pointwise norm of
+`orderCircleSymbol r u` using symmetry.  A continuous function's pointwise
+norm is at most its uniform norm.  Fourier intertwining identifies that norm
+with the complex order-`r` operator norm, and the real/complex comparison
+identifies the latter with `differenceSmoothness r u`.
 
 ### `fourthOrderSmoothness_eq_multiplierNorm`
 
-Unfold `fourthOrderSmoothness`.  The real/complex comparison replaces the
-norm of `Aᵤ` by the norm of the complex fourth-order operator.  Fourier
-intertwining and the exact multiplication norm replace that by
-`‖fourthCircleSymbol u‖`.  Finally, the symbol evaluation identifies this with
-`fourthOrderMultiplierNorm u`.  Chaining these three equalities proves
-equation (3.3).
+Rewrite the left side backwards with `differenceSmoothness_four` and the
+right side backwards with `differenceMultiplierNorm_four`.  Apply
+`differenceSmoothness_eq_multiplierNorm` at `r = 4`.  This recovers equation
+(3.3) entirely from the generic theorem while preserving its original public
+statement.
 
 ### `fourthOrderMultiplier_le_smoothness`
 
-Rewrite the multiplier value as the pointwise norm of
-`fourthCircleSymbol u` using symmetry.  It is at most the continuous-map norm
-of that symbol.  The complex Fourier intertwining identifies this norm with
-the complex fourth-order operator norm, and the real/complex comparison
-identifies the latter with `fourthOrderSmoothness u`.  These rewrites followed
-by the standard pointwise bound `m.norm_coe_le_norm` prove the result.
+Rewrite both sides backwards with `differenceMultiplier_four` and
+`differenceSmoothness_four`.  The generic pointwise theorem at `r = 4` then
+proves the legacy fourth-order inequality directly.

@@ -106,6 +106,64 @@ theorem polynomial_eq_of_chebyshevCoefficient_eq
       chebyshevCoefficient p m = chebyshevCoefficient q m) :
     p = q
 
+/-- The symmetric kernel supported on `[-n, n]` whose entries are the first
+`n + 1` Chebyshev coefficients of `p`. -/
+def kernelOfPolynomial (n : ℕ) (p : ℝ[X]) : Kernel :=
+  Finsupp.onFinset (Finset.Icc (-(n : ℤ)) n)
+    (fun k ↦ if k ∈ Finset.Icc (-(n : ℤ)) n then
+      chebyshevCoefficient p k.natAbs else 0)
+    (by
+      intro k hk
+      by_contra hmem
+      simp [hmem] at hk)
+
+@[simp]
+theorem kernelOfPolynomial_apply (n : ℕ) (p : ℝ[X]) (k : ℤ) :
+    kernelOfPolynomial n p k =
+      if k ∈ Finset.Icc (-(n : ℤ)) n then
+        chebyshevCoefficient p k.natAbs else 0
+
+/-- `kernelOfPolynomial` vanishes outside its prescribed support interval. -/
+theorem kernelOfPolynomial_support
+    (n : ℕ) (p : ℝ[X]) :
+    ∀ k : ℤ, k ∉ Finset.Icc (-(n : ℤ)) n →
+      kernelOfPolynomial n p k = 0
+
+/-- `kernelOfPolynomial` is symmetric. -/
+theorem kernelOfPolynomial_symmetric
+    (n : ℕ) (p : ℝ[X]) :
+    ∀ k : ℤ, kernelOfPolynomial n p (-k) = kernelOfPolynomial n p k
+
+/-- Reconstructing a polynomial of degree at most `n` from its Chebyshev
+coefficients and then taking its kernel polynomial returns the original
+polynomial. -/
+theorem kernelPolynomial_kernelOfPolynomial
+    (n : ℕ) (p : ℝ[X]) (hp : p.natDegree ≤ n) :
+    kernelPolynomial n (kernelOfPolynomial n p) = p
+
+/-- A normalized nonnegative polynomial of degree at most `n` gives an
+admissible kernel by taking its Chebyshev coefficients. -/
+theorem kernelOfPolynomial_isAdmissible
+    (n : ℕ)
+    (p : ℝ[X])
+    (hdegree : p.natDegree ≤ n)
+    (hnonnegative : ∀ x ∈ Set.Icc (-1 : ℝ) 1, 0 ≤ p.eval x)
+    (heval_one : p.eval 1 = 1) :
+    IsAdmissibleKernel n (kernelOfPolynomial n p)
+
+/-- Supported symmetric kernels are determined by their kernel polynomials. -/
+theorem kernel_eq_of_kernelPolynomial_eq
+    (n : ℕ)
+    {u v : Kernel}
+    (hu_support : ∀ k : ℤ,
+      k ∉ Finset.Icc (-(n : ℤ)) n → u k = 0)
+    (hu_symmetric : ∀ k : ℤ, u (-k) = u k)
+    (hv_support : ∀ k : ℤ,
+      k ∉ Finset.Icc (-(n : ℤ)) n → v k = 0)
+    (hv_symmetric : ∀ k : ℤ, v (-k) = v k)
+    (hpolynomial : kernelPolynomial n u = kernelPolynomial n v) :
+    u = v
+
 end JoseSmoothest
 ```
 
@@ -250,3 +308,67 @@ degree at most `n` lies in the span of the basis elements indexed by
 `Set.Iic n`.  `Basis.repr_support_subset_of_mem_span` then says that its
 `m`-th coordinate vanishes.  Thus every coordinate of `p` and `q` agrees,
 and basis extensionality gives `p = q`.
+
+### `kernelOfPolynomial`
+
+Use `Finsupp.onFinset` on the integer interval `[-n, n]`. At an index in that
+interval, assign the Chebyshev coefficient whose natural-number index is the
+absolute value of the integer; outside the interval, assign zero. The final
+argument of `Finsupp.onFinset` verifies that the displayed value is zero
+whenever the index is not in the chosen support.
+
+### `kernelOfPolynomial_apply`
+
+The evaluation formula is the defining equation of `Finsupp.onFinset` for
+the preceding construction. Unfolding `kernelOfPolynomial` reduces the
+statement definitionally, so the proof is `rfl`.
+
+### `kernelOfPolynomial_support`
+
+Fix an integer outside `[-n, n]` and rewrite with
+`kernelOfPolynomial_apply`. The interval-membership test is false, so the
+conditional expression simplifies to zero.
+
+### `kernelOfPolynomial_symmetric`
+
+Rewrite both sides using `kernelOfPolynomial_apply`. Integer absolute value
+is invariant under negation, so the selected Chebyshev coefficient is the
+same. The interval `[-n, n]` is also invariant under negation: expanding
+membership into its two inequalities and applying integer arithmetic proves
+`-k ∈ [-n,n] ↔ k ∈ [-n,n]`. The two conditional expressions therefore agree.
+
+### `kernelPolynomial_kernelOfPolynomial`
+
+Apply `polynomial_eq_of_chebyshevCoefficient_eq`. The reconstructed kernel
+polynomial has degree at most `n` by `kernelPolynomial_natDegree_le`, and the
+input polynomial has that bound by hypothesis. For `m ≤ n`, extract the
+`m`-th Chebyshev coefficient of the reconstructed polynomial with
+`chebyshevCoefficient_kernelPolynomial`. Evaluation of
+`kernelOfPolynomial` at the nonnegative integer `m` selects the inside branch
+of its definition, since `m ∈ [-n,n]`, and `Int.natAbs m = m`. Thus its
+coefficient is exactly `chebyshevCoefficient p m`, as required.
+
+### `kernelOfPolynomial_isAdmissible`
+
+Let `u = kernelOfPolynomial n p`. Its support and symmetry are the preceding
+two theorems, while `kernelPolynomial_kernelOfPolynomial` identifies its
+kernel polynomial with `p`.
+
+For normalization, specialize `kernelPolynomial_eval_cos` to frequency zero.
+Since `cos 0 = 1`, reconstruction and the hypothesis `p(1)=1` make the left
+side equal to one. Unfolding the Fourier transform at zero turns the right
+side into the sum of the kernel coefficients, giving the required
+normalization. For Fourier nonnegativity at an arbitrary frequency `ξ`, use
+the same evaluation theorem and reconstruction to rewrite the Fourier
+transform as `p(cos ξ)`. Since `cos ξ ∈ [-1,1]`, the assumed nonnegativity of
+`p` finishes the proof.
+
+### `kernel_eq_of_kernelPolynomial_eq`
+
+Use extensionality on an arbitrary integer `k`. Outside `[-n,n]`, both
+kernels vanish by their support hypotheses. Inside the interval, integer
+arithmetic gives `|k| ≤ n`. Apply `chebyshevCoefficient` at index `|k|` to
+the polynomial equality, and use `chebyshevCoefficient_kernelPolynomial` to
+obtain `u(|k|)=v(|k|)`. If `k ≥ 0`, then `|k|=k`, so this is the desired
+equality directly. If `k < 0`, then `|k|=-k`; symmetry for `u` and `v`
+transports the coefficient equality back from the positive index to `k`.

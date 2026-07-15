@@ -1,1 +1,16 @@
 import JoseSmoothest.Challenge
+import JoseSmoothest.EvenOrder
+import JoseSmoothest.EvenOrder.ActiveSetPerturbation
+import JoseSmoothest.EvenOrder.DirectClassification
+import JoseSmoothest.EvenOrder.Equioscillation
+import JoseSmoothest.EvenOrder.EndpointAlternation
+import JoseSmoothest.EvenOrder.EndpointContact
+import JoseSmoothest.EvenOrder.EndpointPhase
+import JoseSmoothest.EvenOrder.FourierReduction
+import JoseSmoothest.EvenOrder.PellExtraction
+import JoseSmoothest.EvenOrder.WeightedMinimax
+import JoseSmoothest.JacobiTheta
+import JoseSmoothest.SpecialFunctions.PellAbel
+import JoseSmoothest.SpecialFunctions.RealPellPhase
+import JoseSmoothest.TwoSetAlternation
+import JoseSmoothest.Zolotarev

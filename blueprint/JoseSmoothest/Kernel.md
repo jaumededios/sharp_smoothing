@@ -3,7 +3,8 @@
 ## Purpose
 
 This module builds the bounded forward-difference and finite-convolution
-operators used verbatim in Theorem 1.4.
+operators used in Theorem 1.4, together with their composition at an
+arbitrary difference order.
 
 ## Imports
 
@@ -26,6 +27,10 @@ def differenceOperator : Sequence →L[ℝ] Sequence :=
 def averagingOperator (u : Kernel) : Sequence →L[ℝ] Sequence :=
   u.sum fun k a ↦ a • (translation k).toContinuousLinearMap
 
+/-- The `r`-fold forward difference after convolution by `u`. -/
+def differenceAfterAveraging (r : ℕ) (u : Kernel) : Sequence →L[ℝ] Sequence :=
+  (differenceOperator ^ r).comp (averagingOperator u)
+
 end JoseSmoothest
 ```
 
@@ -46,6 +51,15 @@ linear maps `u(k) • translation(k)`.  Applying the sum to a sequence `f` gives
 the finite convolution `∑ k, u(k) f(j - k)` at coefficient `j`.  Finite sums
 and scalar multiples of continuous linear maps remain continuous, hence this
 definition also packages boundedness without a separate analytic argument.
+
+### `differenceAfterAveraging`
+
+Continuous linear endomorphisms form a monoid under composition, so
+`differenceOperator ^ r` is the `r`-fold iterate of the forward difference.
+Compose this iterate on the left with `averagingOperator u`.  Application to
+`f` is therefore `∇ʳ(u ∗ f)`, including the order-zero case where the power
+is the identity.  Since powers and compositions of continuous linear maps
+remain continuous linear maps, the result is bounded without a new estimate.
 
 In the Fourier module, unfold the linear-isometry application and use
 `Lp.coeFn_compMeasurePreserving` together with extensionality by

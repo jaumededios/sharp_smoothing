@@ -3,7 +3,9 @@
   "solution_module": "Solution",
   "theorem_names": [
     "JoseSmoothestComparator.smoothestAverage_inequality",
-    "JoseSmoothestComparator.smoothestAverage_eq_iff"
+    "JoseSmoothestComparator.smoothestAverage_eq_iff",
+    "JoseSmoothestComparator.smoothestAverage_existsUnique_optimizer",
+    "JoseSmoothestComparator.sixthDifference_eq_cubicWeightedNorm"
   ],
   "permitted_axioms": [
     "propext",

@@ -43,5 +43,5 @@ jobs:
           echo "$PWD/.lake/build/bin" >> "$GITHUB_PATH"
           echo "$PWD/.lake/packages/lean4export/.lake/build/bin" >> "$GITHUB_PATH"
 
-      - name: Compare and kernel-check both parts of Theorem 1.4
+      - name: Compare and kernel-check all showcased results
         run: lake test

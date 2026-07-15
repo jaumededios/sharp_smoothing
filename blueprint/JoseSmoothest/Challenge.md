@@ -2,12 +2,12 @@
 
 ## Purpose
 
-This module contains the formalized part of paper-facing Theorem 1.4: the
-lower bound and, for an already-admissible kernel, the characterization of
-equality by the coefficient formula (1.6). All analytic and
-approximation-theoretic work is imported; this file only assembles the
-established equivalences. It does not construct the coefficient-defined
-kernel or prove it admissible.
+This module completes paper-facing Theorem 1.4. It proves the lower bound and
+the coefficient characterization of equality, constructs the kernel from the
+Chebyshev coefficients of the extremal polynomial, proves that this kernel is
+admissible and attains the sharp constant, and proves that it is the unique
+admissible optimizer. All analytic and approximation-theoretic work is
+imported; this file assembles those results at the kernel level.
 
 ## Imports
 
@@ -27,6 +27,21 @@ extremal problem after the substitution `x = cos ξ`. -/
 theorem IsAdmissibleKernel.kernelPolynomial
     {n : ℕ} {u : Kernel} (h : IsAdmissibleKernel n u) :
     IsAdmissibleWeightedPolynomial (n + 2) (kernelPolynomial n u)
+
+/-- The kernel obtained from the Chebyshev coefficients of the extremal
+polynomial in Proposition 1.6. -/
+def extremalKernel (n : ℕ) : Kernel :=
+  kernelOfPolynomial n (weightedExtremalPolynomial (n + 2))
+
+/-- The polynomial symbol of `extremalKernel` is the extremal polynomial. -/
+theorem kernelPolynomial_extremalKernel (n : ℕ) :
+    kernelPolynomial n (extremalKernel n) =
+      weightedExtremalPolynomial (n + 2)
+
+/-- The coefficient-defined extremal kernel satisfies all four hypotheses of
+Theorem 1.4. -/
+theorem extremalKernel_isAdmissible (n : ℕ) :
+    IsAdmissibleKernel n (extremalKernel n)
 
 /-- The explicit coefficient formula characterizing an equality case. -/
 def IsExtremalKernel (n : ℕ) (u : Kernel) : Prop :=
@@ -63,12 +78,43 @@ theorem smoothestAverage_eq_iff
     fourthOrderSmoothness u = sharpConstant n ↔
       IsExtremalKernel n u
 
+/-- The explicit coefficient-defined kernel satisfies the equality formula
+from Theorem 1.4. -/
+theorem extremalKernel_isExtremal (n : ℕ) :
+    IsExtremalKernel n (extremalKernel n)
+
+/-- The coefficient-defined admissible kernel attains the sharp constant. -/
+theorem extremalKernel_attains (n : ℕ) :
+    fourthOrderSmoothness (extremalKernel n) = sharpConstant n
+
+/-- The sharp fourth-order constant is attained by an admissible kernel. -/
+theorem exists_extremalKernel (n : ℕ) :
+    ∃ u : Kernel,
+      IsAdmissibleKernel n u ∧
+        fourthOrderSmoothness u = sharpConstant n
+
+/-- Every admissible kernel attaining the sharp constant is the explicit
+coefficient-defined kernel. -/
+theorem eq_extremalKernel_of_attains
+    (n : ℕ)
+    (u : Kernel)
+    (admissible : IsAdmissibleKernel n u)
+    (attains : fourthOrderSmoothness u = sharpConstant n) :
+    u = extremalKernel n
+
+/-- There is a unique admissible kernel attaining the sharp fourth-order
+constant. -/
+theorem existsUnique_extremalKernel (n : ℕ) :
+    ∃! u : Kernel,
+      IsAdmissibleKernel n u ∧
+        fourthOrderSmoothness u = sharpConstant n
+
 end JoseSmoothest
 ```
 
 ## Detailed proof blueprint
 
-### Polynomial feasibility
+### `IsAdmissibleKernel.kernelPolynomial`
 
 For `h : IsAdmissibleKernel n u`, construct
 `h.kernelPolynomial : IsAdmissibleWeightedPolynomial (n+2)
@@ -79,7 +125,38 @@ degree bound (after simplifying `(n+2)-2`),
 `h.fourier_nonnegative`, and `kernelPolynomial_eval_one` uses the support,
 symmetry, and `h.sum_eq_one` projections.
 
-### Kernel coefficient characterization
+### `extremalKernel`
+
+Apply `kernelOfPolynomial` to the unique weighted extremal polynomial at the
+shifted degree `N=n+2`. The result is, by definition, the finitely supported
+symmetric kernel whose entries are the Chebyshev coefficients appearing in
+formula (1.6).
+
+### `kernelPolynomial_extremalKernel`
+
+Use `kernelPolynomial_kernelOfPolynomial`. The only obligation is that the
+weighted extremal polynomial has degree at most `n`; this follows from
+`weightedExtremalPolynomial_natDegree_le` at `N=n+2`, whose bound `N-2`
+simplifies to `n`.
+
+### `extremalKernel_isAdmissible`
+
+Apply `kernelOfPolynomial_isAdmissible` to the weighted extremal polynomial.
+Its degree bound is the one used above. Its nonnegativity on `[-1,1]` and its
+value one at the right endpoint are exactly
+`weightedExtremalPolynomial_nonnegative` and
+`weightedExtremalPolynomial_eval_one`. The generic polynomial-to-kernel
+theorem then supplies support, symmetry, normalization, and Fourier
+nonnegativity together.
+
+### `IsExtremalKernel`
+
+This predicate records formula (1.6) directly at every index `0 ≤ m ≤ n`.
+The same integral is required at `m` and `-m`, so the definition contains
+both the Chebyshev coefficient formula and the symmetry of the proposed
+optimizer on its supported indices.
+
+### `isExtremalKernel_iff_kernelPolynomial_eq`
 
 Use `weightedExtremalPolynomial_eval` to rewrite the integral in
 `IsExtremalKernel` as
@@ -136,4 +213,43 @@ The positive factor four cancels. Apply
 `admissible.kernelPolynomial.norm_eq_iff` to turn this into
 `p=weightedExtremalPolynomial (n+2)`, then apply
 `isExtremalKernel_iff_kernelPolynomial_eq` in reverse.  Every arrow is an
-equivalence, so this proves both directions and uniqueness simultaneously.
+equivalence, so this proves both directions of the equality characterization.
+
+### `extremalKernel_isExtremal`
+
+Apply `isExtremalKernel_iff_kernelPolynomial_eq` using the symmetry field of
+`extremalKernel_isAdmissible`. The resulting polynomial equality is precisely
+`kernelPolynomial_extremalKernel`.
+
+### `extremalKernel_attains`
+
+Use the reverse implication of `smoothestAverage_eq_iff` for the explicit
+kernel. Its admissibility comes from `extremalKernel_isAdmissible`, and the
+coefficient condition comes from `extremalKernel_isExtremal`. This gives the
+sharp norm equality.
+
+### `exists_extremalKernel`
+
+Take `extremalKernel n` as the witness and package its admissibility and
+attainment theorems into the required conjunction.
+
+### `eq_extremalKernel_of_attains`
+
+Suppose an admissible kernel `u` attains the sharp constant. The forward
+implication of `smoothestAverage_eq_iff` shows that `u` satisfies the
+coefficient formula. Convert this with
+`isExtremalKernel_iff_kernelPolynomial_eq` into equality of its kernel
+polynomial with the weighted optimizer. The explicit kernel has the same
+polynomial by `kernelPolynomial_extremalKernel`. Finally apply
+`kernel_eq_of_kernelPolynomial_eq` to these polynomial identities and the
+support and symmetry fields of the two admissibility proofs, obtaining
+`u = extremalKernel n`.
+
+### `existsUnique_extremalKernel`
+
+Use `extremalKernel n` as the existence witness, with
+`extremalKernel_isAdmissible` and `extremalKernel_attains` proving the target
+property. For uniqueness, any other witness satisfies the hypotheses of
+`eq_extremalKernel_of_attains`, so it equals the explicit kernel. This
+packages construction, attainment, and uniqueness into a single `∃!`
+statement.

@@ -20,12 +20,29 @@ sources:
 status:
   scope: >-
     Theorem 1.4 (the fourth-difference lower bound for normalized symmetric
-    kernels with nonnegative Fourier transform and its conditional equality
-    characterization) and the supporting Proposition 1.6. The formalization
-    does not construct the coefficient-defined kernel or prove it admissible,
-    so attainment in the kernel problem is not formalized. The paper's other
-    derivative orders and Zolotarev-polynomial results are out of scope.
-  sorry_count: 2
+    kernels with nonnegative Fourier transform, equality characterization,
+    and unique attainment) and the supporting Proposition 1.6. The project
+    also proves the arbitrary iterated-difference Fourier multiplier theorem,
+    its exact reduction at every even order 2m to 2^m times a generic
+    weighted polynomial norm, the full sufficient and necessary zero--peak
+    theory at arbitrary m, the unconditional sharp lower bound and unique
+    admissible kernel at every even order, the polynomial Pell--Abel algebra,
+    and the monic squarefree minimal-genus Pell factor extracted from that
+    minimizer with its endpoint valuations and interval sign. It further
+    proves a direct real-phase classification of every such minimizer: the
+    exact cosine and sine formulae, strict phase monotonicity, exact phase
+    length, and an endpoint-coefficient formula for the sharp constant. This
+    direct classification does not depend on compact Riemann surfaces,
+    Abelian periods, or theta functions. It
+    also proves the exact sixth-difference reduction to a cubic weighted polynomial norm,
+    the sixth-order minimax/kernel theorem conditional on an abstract
+    zero--peak certificate, and the complete passage from Lebedev's
+    Pell--Abel/differential/equioscillation data to that certificate and the
+    constant 144 r^2/N^2 for the supplied abstract endpoint parameter r.
+    Identifying r with the paper's Jacobi elliptic ratio, as well as the
+    analytic construction and existence of the Zolotarev data, remains out of
+    scope; hence Theorem 1.7 is not yet unconditional.
+  sorry_count: 4
   sorry_in_definitions: 0
   axioms:
     - "propext"
@@ -33,7 +50,7 @@ status:
     - "Classical.choice"
     - "sorryAx"
   notes: >-
-    Both sorries and the resulting sorryAx occurrences are confined to the two
+    All sorries and the resulting sorryAx occurrences are confined to four
     statement declarations in the root Showcase.lean comparator
     module. The mathematical formalization and Solution.lean are sorry-free.
   main_results:
@@ -55,6 +72,125 @@ status:
         - "Classical.choice"
       comparator_config: "Comparator/config.json"
       literature_dependencies: []
+    - declaration: "JoseSmoothest.existsUnique_extremalKernel"
+      file: "JoseSmoothest/Challenge.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Quot.sound"
+        - "Classical.choice"
+      comparator_config: "Comparator/config.json"
+      literature_dependencies: []
+    - declaration: >-
+        JoseSmoothest.differenceSmoothness_six_eq_eight_mul_cubicWeightedPolynomialNorm
+      file: "JoseSmoothest/SixthOrder.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Quot.sound"
+        - "Classical.choice"
+      comparator_config: "Comparator/config.json"
+      literature_dependencies: []
+    - declaration: >-
+        JoseSmoothest.differenceSmoothness_two_mul_eq_pow_mul_evenWeightedPolynomialNorm
+      file: "JoseSmoothest/EvenOrder/FourierReduction.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Quot.sound"
+        - "Classical.choice"
+      literature_dependencies: []
+    - declaration: >-
+        JoseSmoothest.evenWeightedPolynomialNorm_eq_iff_of_certificate
+      file: "JoseSmoothest/EvenOrder/WeightedMinimax.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Quot.sound"
+        - "Classical.choice"
+      literature_dependencies: []
+    - declaration: "JoseSmoothest.existsUnique_evenWeightedMinimizer"
+      file: "JoseSmoothest/EvenOrder/Equioscillation.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Quot.sound"
+        - "Classical.choice"
+      literature_dependencies: []
+    - declaration: "JoseSmoothest.existsUnique_smoothestEvenOrderKernel"
+      file: "JoseSmoothest/EvenOrder.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Quot.sound"
+        - "Classical.choice"
+      literature_dependencies: []
+    - declaration: "JoseSmoothest.EndpointAlternant.squarefree_D"
+      file: "JoseSmoothest/EvenOrder/PellExtraction.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Quot.sound"
+        - "Classical.choice"
+      literature_dependencies: []
+    - declaration: "JoseSmoothest.EndpointAlternant.phaseLength"
+      file: "JoseSmoothest/EvenOrder/EndpointPhase.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Quot.sound"
+        - "Classical.choice"
+      literature_dependencies: []
+    - declaration: "JoseSmoothest.smoothestEvenOrder_cosine_classification"
+      file: "JoseSmoothest/EvenOrder/DirectClassification.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Quot.sound"
+        - "Classical.choice"
+      literature_dependencies: []
+    - declaration: >-
+        JoseSmoothest.sharpEvenDifferenceConstant_eq_endpointDValue
+      file: "JoseSmoothest/EvenOrder/DirectClassification.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Quot.sound"
+        - "Classical.choice"
+      literature_dependencies: []
+    - declaration: >-
+        Polynomial.PellAbelSolution.rootMultiplicity_differentialNumerator
+      file: "JoseSmoothest/SpecialFunctions/PellAbel.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Quot.sound"
+        - "Classical.choice"
+      literature_dependencies: []
+    - declaration: "JoseSmoothest.existsUnique_certifiedSixthOrderKernel"
+      file: "JoseSmoothest/SixthOrder.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Quot.sound"
+        - "Classical.choice"
+      literature_dependencies:
+        - >-
+            Conditional on CubicZeroPeakCertificate; the paper constructs the
+            intended certificate from Zolotarev polynomials.
+    - declaration: >-
+        JoseSmoothest.CubicZolotarevData.sixthOrderSmoothness_ge_paperConstant
+      file: "JoseSmoothest/Zolotarev.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Quot.sound"
+        - "Classical.choice"
+      literature_dependencies:
+        - >-
+            Conditional on the real polynomial Pell--Abel, differential, and
+            equioscillation data asserted by Lebedev; the paper does not prove
+            existence of the modulus k_N used to produce those data.
 
 automation:
   methods:
@@ -67,12 +203,12 @@ automation:
         local shell builds, and leanprover/comparator with landrun.
       cost:
         wall_time: >-
-          Approximately 1 hour 34 minutes for the primary proof run, followed
-          by a separate comparator and repository-packaging pass.
+          Developed over multiple interactive sessions; aggregate wall time
+          was not recorded.
         spend_usd: "not reported"
         hardware: "API-hosted model; local CPU Lean compilation"
       prompting_notes: >-
-        The user requested a prerequisite audit, an eight-file natural-language
+        The user requested a prerequisite audit, a natural-language
         blueprint in one-to-one correspondence with the mathematical Lean
         modules, a complete formalization, and independent comparator checking.
   spend_usd: "not reported"
@@ -83,18 +219,27 @@ automation:
 
 fidelity:
   divergences: >-
-    Only Theorem 1.4 and its polynomial extremal prerequisite, Proposition
-    1.6, are formalized. Kernels are represented as finitely supported
+    Theorem 1.4 and its polynomial extremal prerequisite, Proposition 1.6,
+    are fully formalized, including construction and unique attainment of the
+    extremal kernel. Kernels are represented as finitely supported
     functions on all of ℤ with an explicit support hypothesis, rather than as
     functions whose domain is the finite interval. The sequence space is
     Mathlib's real Lp space for counting measure, which realizes ℓ²(ℤ). The
     hypotheses, stated constant, optimizer formula, and equality coefficient
     formula otherwise follow the paper's statements. The paper-facing
     Showcase retains `0 < n`; the reusable internal theorems prove the
-    slightly stronger result without that unused assumption. The development
-    does not construct the coefficient-defined kernel and prove it admissible,
-    so it establishes only the conditional equality characterization and not
-    attainment of the kernel bound.
+    slightly stronger result without that unused assumption. For the sixth
+    derivative, the Fourier reduction and all consequences of a finite
+    zero--peak certificate are formalized. The Pell--Abel and differential
+    identities are also shown to produce the cubic endpoint quotient,
+    certificate, the exact constant in terms of the supplied abstract
+    endpoint parameter r, and the unique kernel. The remaining missing
+    component for the paper's explicit sixth-order presentation is analytic
+    existence of the stated Zolotarev data from the theta/elliptic
+    construction, including existence of k_N. Independently, the minimizer at
+    every even order now has an unconditional direct minimal-genus Pell and
+    real-phase classification. Thus Theorem 1.7 is still not claimed from the
+    paper's stated theta data alone.
 
 review:
   status: "self-assessed"
@@ -102,9 +247,9 @@ review:
     - "OpenAI Codex"
   notes: >-
     The project builds, the mathematical modules are sorry-free, and
-    leanprover/comparator accepts both main statements using only the listed
-    axioms and Lean's kernel. The source-to-Lean fidelity has not yet received
-    independent human peer review or author verification.
+    leanprover/comparator accepts the paper-facing statements using only the
+    listed axioms and Lean's kernel. The source-to-Lean fidelity has not yet
+    received independent human peer review or author verification.
 
 alignment:
   namespace: "JoseSmoothest"
@@ -122,6 +267,13 @@ alignment:
       module: "JoseSmoothest.Challenge"
       status: "proved"
       note: "Characterizes equality by the Chebyshev coefficient formula."
+    - source: "Theorem 1.4, attainment and uniqueness"
+      lean: "existsUnique_extremalKernel"
+      module: "JoseSmoothest.Challenge"
+      status: "proved"
+      note: >-
+        Constructs the kernel from Chebyshev coefficients, proves it
+        admissible and sharp, and proves uniqueness among admissible kernels.
     - source: "Proposition 1.6, inequality (1.7)"
       lean: "weightedPolynomialNorm_ge"
       module: "JoseSmoothest.WeightedExtremal"
@@ -132,6 +284,99 @@ alignment:
       module: "JoseSmoothest.WeightedExtremal"
       status: "proved"
       note: "Unique transformed-Chebyshev equality case."
+    - source: "Theorem 1.7, Fourier reduction to Proposition 1.9"
+      lean: >-
+        differenceSmoothness_six_eq_eight_mul_cubicWeightedPolynomialNorm
+      module: "JoseSmoothest.SixthOrder"
+      status: "proved"
+      note: "Exact sixth-difference norm identity with the factor eight."
+    - source: "Higher-even-order weighted reduction discussed after Theorem 1.7"
+      lean: >-
+        differenceSmoothness_two_mul_eq_pow_mul_evenWeightedPolynomialNorm
+      module: "JoseSmoothest.EvenOrder.FourierReduction"
+      status: "proved"
+      note: >-
+        Exact order-2m identity, with factor 2^m, before any extremal or
+        special-function assumption.
+    - source: "Higher-even-order zero--peak minimax principle"
+      lean: "evenWeightedPolynomialNorm_eq_iff_of_certificate"
+      module: "JoseSmoothest.EvenOrder.WeightedMinimax"
+      status: "proved"
+      note: >-
+        A generic sufficient alternation certificate gives the sharp norm
+        and unique admissible quotient for every endpoint order m.
+    - source: "Higher-even-order constrained minimizer and equioscillation"
+      lean: "existsUnique_evenWeightedMinimizer"
+      module: "JoseSmoothest.EvenOrder.Equioscillation"
+      status: "proved"
+      note: >-
+        Compact finite-dimensional minimization plus the active-set
+        separator dichotomy gives an unconditional unique weighted minimizer
+        and a full zero--peak certificate for every 1 <= m <= N.
+    - source: "Unconditional sharp smoothing theorem at every even order"
+      lean: "existsUnique_smoothestEvenOrderKernel"
+      module: "JoseSmoothest.EvenOrder"
+      status: "proved"
+      note: >-
+        For every m >= 1 and support radius n, constructs the unique
+        admissible kernel attaining the intrinsic sharp 2m-th difference
+        constant. The lower bound and both polynomial and kernel equality
+        characterizations are unconditional; the special-function layer is
+        only needed to express the minimizer more explicitly.
+    - source: "Pell--Abel endpoint-contact algebra used in the higher-order plan"
+      lean: "Polynomial.PellAbelSolution.rootMultiplicity_differentialNumerator"
+      module: "JoseSmoothest.SpecialFunctions.PellAbel"
+      status: "proved"
+      note: >-
+        Exact (m-1)/2 valuation of the differential numerator, together with
+        the reusable coprimality, divisibility, and degree infrastructure.
+    - source: "Minimal-genus Pell extraction from the even-order minimizer"
+      lean: "EndpointAlternant.squarefree_D"
+      module: "JoseSmoothest.EvenOrder.PellExtraction"
+      status: "proved"
+      note: >-
+        Extracts the monic squarefree residual weight from the endpoint
+        alternant, proves its exact minimal-genus degree, both endpoint
+        valuations, negativity on the open interval, and the resulting
+        endpoint-contact package. Squarefreeness is proved directly over
+        real polynomials, including irreducible quadratic factors.
+    - source: "Direct real-phase classification of every even-order minimizer"
+      lean: "smoothestEvenOrder_cosine_classification"
+      module: "JoseSmoothest.EvenOrder.DirectClassification"
+      status: "proved"
+      note: >-
+        The extracted normalized alternant is the cosine of a strictly
+        increasing integral phase. Consecutive alternation nodes have phase
+        values j*pi, so the exact scaled phase winding is (n+1)*pi after
+        multiplying by the polynomial degree. No compact-curve or period
+        theory is used.
+    - source: "Endpoint formula for the arbitrary-even sharp constant"
+      lean: "sharpEvenDifferenceConstant_eq_endpointDValue"
+      module: "JoseSmoothest.EvenOrder.DirectClassification"
+      status: "proved"
+      note: >-
+        Identifies the weighted peak and hence the sharp kernel constant with
+        the endpoint coefficient of the monic squarefree minimal-genus Pell
+        weight extracted from the canonical minimizer.
+    - source: "Proposition 1.9, zero--peak extremal argument"
+      lean: "cubicWeightedPolynomialNorm_ge_of_certificate"
+      module: "JoseSmoothest.SixthOrder"
+      status: "proved conditionally"
+      note: >-
+        Proves sharpness and uniqueness from the finite alternation
+        certificate.
+    - source: "Proposition 4.3 and Theorem 1.7, Zolotarev endpoint algebra"
+      lean: >-
+        CubicZolotarevData.sixthOrderSmoothness_ge_paperConstant
+      module: "JoseSmoothest.Zolotarev"
+      status: "proved conditionally"
+      note: >-
+        Derives the triple endpoint quotient, normalization, nonnegativity,
+        certificate, exact 144 r^2/N^2 constant for the supplied abstract r,
+        equality, and unique kernel from Lebedev's polynomial
+        Pell/differential/equioscillation package. Constructing that package
+        from an elliptic modulus and identifying r with the paper's Jacobi
+        ratio remain open.
 
 acknowledgements: >-
   Built on Mathlib's analysis, Lp, Fourier, polynomial, and Chebyshev

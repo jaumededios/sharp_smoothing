@@ -29,27 +29,48 @@ submitted upstream verbatim or as an unattended AI-generated pull request.
 ## Refactor performed
 
 - `Basic`: expanded the module map and retained the minimal foundational API.
-- `Kernel`: documented the two operators and kept their implementation small.
-- `Fourier`: added proof architecture, removed redundant tactics, and added
-  named projections for all four admissibility hypotheses.
+- `Kernel`: documented the operators, kept their implementation small, and
+  exposed the order-generic difference-after-averaging operator used by both
+  the fourth- and sixth-order developments.
+- `Fourier`: parameterized the complex symbol, Fourier intertwining, and
+  real/complex norm comparison by the number of differences; added even-order
+  and fourth-/sixth-order rewrites; and retained named projections for all
+  four admissibility hypotheses.
 - `Chebyshev`: narrowed an import, replaced a deprecated theorem name,
-  removed flexible `simp`, and documented every public declaration.
+  removed flexible `simp`, documented every public declaration, and added the
+  inverse polynomial-to-kernel construction and injectivity theorem.
 - `Alternation`: replaced the broad import, documented proof phases, and
   removed the unnecessary hypothesis `0 < m`.
 - `WeightedExtremal`: narrowed imports, removed lint warnings, and introduced
   `IsAdmissibleWeightedPolynomial` with theorem methods for the sharp bound
   and equality case.
 - `Challenge`: removed the unused internal hypothesis `0 < n`, packaged the
-  kernel-to-polynomial feasibility bridge, and eliminated duplicated
-  hypothesis plumbing.
-- `Showcase` / `Solution`: preserved the paper's exact `n > 0` boundary and
-  clarified that equality is conditional on admissibility.
+  kernel-to-polynomial feasibility bridge, constructed the unique attaining
+  kernel, and eliminated duplicated hypothesis plumbing.
+- `SixthOrder`: isolates the order-six operator reduction and the reusable
+  property-first zero--peak alternation argument from the analytic
+  Zolotarev/elliptic construction, then transfers a supplied certificate back
+  to conditional kernel attainment and uniqueness.
+- `JacobiTheta`: fixes the period-one theta normalization used by Mathlib,
+  defines the translated theta expressions and Lebedev ratio, and deliberately
+  limits its theorems to the derivative and symmetry facts currently supported
+  by the library.
+- `Zolotarev`: derives the endpoint cube, exact normalization, degree,
+  nonnegativity, zero--peak certificate, `144 r² / N²` constant, and unique
+  kernel from the Pell--Abel/differential/equioscillation package. It also
+  records the elementary Jacobi endpoint-scale calculation.
+- `Showcase` / `Solution`: define iterated differences at the public boundary,
+  preserve the paper's `n > 0` hypothesis, and check the fourth-order bound,
+  equality, unique attainment, and sixth-order norm reduction.
 
-The new local API has two useful paths:
+The new local API has several useful paths:
 
 ```text
 admissible.support / symmetric / sum_eq_one / fourier_nonnegative
 admissible.kernelPolynomial.norm_ge / norm_eq_iff
+kernelOfPolynomial / kernelPolynomial_kernelOfPolynomial
+kernelOfPolynomial_isAdmissible / kernel_eq_of_kernelPolynomial_eq
+extremalKernel / extremalKernel_attains / existsUnique_extremalKernel
 ```
 
 Thus downstream proofs no longer know the nesting of the admissibility
@@ -61,8 +82,7 @@ normalization arguments.
 The following checks pass on Mathlib `v4.32.0`:
 
 - `lake build` completes;
-- `#lint in JoseSmoothest` reports 0 errors in 57 declarations, using 14
-  declaration linters;
+- `#lint` reports no declaration-linter errors in the audited modules;
 - the official `lint-style` executable reports no source-style findings;
 - LSP diagnostics contain no mathematical-source warnings other than the
   unresolved copyright-header warning described below;
@@ -70,9 +90,9 @@ The following checks pass on Mathlib `v4.32.0`:
 - `git diff --check` passes;
 - LSP axiom verification finds exactly `propext`, `Classical.choice`, and
   `Quot.sound` for each main theorem, with no suspicious source patterns;
-- the real `leanprover/comparator` check validates both public statements.
+- the real `leanprover/comparator` check validates all four public theorems.
 
-The two `sorry` declarations in `Showcase.lean` are intentional comparator
+The four `sorry` declarations in `Showcase.lean` are intentional comparator
 specifications. `Solution.lean` and the mathematical library are sorry-free.
 
 ## Good candidates for Mathlib
@@ -100,6 +120,12 @@ The private Chebyshev basis machinery supports reusable facts:
 - coordinates above the degree vanish;
 - bounded-degree polynomials are equal when their initial Chebyshev
   coefficients agree.
+
+The new finite reconstruction results also show that taking these
+coefficients and rebuilding a bounded-degree Chebyshev expansion is a genuine
+inverse. The kernel wrapper itself is problem-specific, but the underlying
+finite Chebyshev-series reconstruction is a plausible addition to the same
+upstream API.
 
 These should be extracted from the kernel-specific file into the
 `Polynomial.Chebyshev` namespace, probably adjacent to Mathlib's
@@ -136,11 +162,19 @@ abstraction.
 ## Parts that should remain project-local
 
 The affine Chebyshev scaling, transformed peak nodes, double-root division,
-the specific weighted constant, kernel polynomial, and equality coefficient
-formula encode this paper's problem. They are well factored inside this
-repository but are not presently broad enough to justify Mathlib's
-maintenance burden. `IsAdmissibleWeightedPolynomial` is a useful local API,
-not an upstream candidate by itself.
+specific weighted constants, kernel polynomial, polynomial-to-kernel wrapper,
+and equality coefficient formula encode this paper's problem. The sixth-order
+cubic factorization, `CubicZeroPeakCertificate`, and `CubicZolotarevData` are
+also deliberately property-first local interfaces: their alternation and
+endpoint algebra are reusable, but the packages are tailored to the
+Zolotarev application. The theta-one through theta-four wrappers could become
+an upstream contribution only together with the expected nonvanishing,
+addition, and classical-identification API; definitions alone would be too
+thin. These pieces
+are well factored inside this repository but are not presently broad enough
+to justify Mathlib's maintenance burden. `IsAdmissibleWeightedPolynomial`
+and `IsAdmissibleCubicWeightedPolynomial` are useful local APIs, not upstream
+candidates by themselves.
 
 ## Remaining gates before an upstream contribution
 
