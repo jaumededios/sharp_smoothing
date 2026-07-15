@@ -19,9 +19,11 @@ sources:
 
 status:
   scope: >-
-    Theorem 1.4 (the sharp fourth-difference inequality for normalized
-    symmetric kernels with nonnegative Fourier transform and its unique
-    equality case) and the supporting Proposition 1.6. The paper's other
+    Theorem 1.4 (the fourth-difference lower bound for normalized symmetric
+    kernels with nonnegative Fourier transform and its conditional equality
+    characterization) and the supporting Proposition 1.6. The formalization
+    does not construct the coefficient-defined kernel or prove it admissible,
+    so attainment in the kernel problem is not formalized. The paper's other
     derivative orders and Zolotarev-polynomial results are out of scope.
   sorry_count: 2
   sorry_in_definitions: 0
@@ -32,7 +34,7 @@ status:
     - "sorryAx"
   notes: >-
     Both sorries and the resulting sorryAx occurrences are confined to the two
-    trusted statement declarations in the root Challenge.lean comparator
+    statement declarations in the root Showcase.lean comparator
     module. The mathematical formalization and Solution.lean are sorry-free.
   main_results:
     - declaration: "JoseSmoothest.smoothestAverage_inequality"
@@ -86,8 +88,13 @@ fidelity:
     functions on all of ℤ with an explicit support hypothesis, rather than as
     functions whose domain is the finite interval. The sequence space is
     Mathlib's real Lp space for counting measure, which realizes ℓ²(ℤ). The
-    hypotheses, sharp constant, optimizer, and equality coefficient formula
-    otherwise follow the paper's statements.
+    hypotheses, stated constant, optimizer formula, and equality coefficient
+    formula otherwise follow the paper's statements. The paper-facing
+    Showcase retains `0 < n`; the reusable internal theorems prove the
+    slightly stronger result without that unused assumption. The development
+    does not construct the coefficient-defined kernel and prove it admissible,
+    so it establishes only the conditional equality characterization and not
+    attainment of the kernel bound.
 
 review:
   status: "self-assessed"
@@ -106,7 +113,10 @@ alignment:
       lean: "smoothestAverage_inequality"
       module: "JoseSmoothest.Challenge"
       status: "proved"
-      note: "Sharp fourth-order smoothness lower bound."
+      note: >-
+        Fourth-order smoothness lower bound with the paper's constant. The
+        internal theorem also covers n = 0; Showcase retains the paper's n > 0
+        assumption.
     - source: "Theorem 1.4, equality formula (1.6)"
       lean: "smoothestAverage_eq_iff"
       module: "JoseSmoothest.Challenge"

@@ -38,11 +38,26 @@ end JoseSmoothest
 
 ## Detailed proof blueprint
 
-Counting measure is invariant under addition by any integer.  Mathlib's
-`measurePreserving_vadd` supplies the corresponding `MeasurePreserving`
-proof, and `Lp.compMeasurePreservingₗᵢ` turns composition with that map into a
-linear isometry on `L²`.  Since `-k+j=j-k`, this is precisely the translation
-used in convolution.  All later pointwise formulas are established as
-almost-everywhere equalities through the `Lp.compMeasurePreservingₗᵢ` API and
-remain private to the Fourier proof.
+### `Sequence`
 
+This is a type abbreviation, so there is no proposition to prove.  Instantiate
+Mathlib's bundled `Lp` space with scalar field `ℝ`, exponent `2`, underlying
+space `ℤ`, and counting measure.  The resulting type carries the real Hilbert
+space and normed-space structure needed by every later operator.
+
+### `Kernel`
+
+Again this is a type abbreviation rather than a theorem.  A finitely supported
+function `ℤ →₀ ℝ` records the coefficients of a convolution kernel and makes
+every coefficient sum definitionally finite.  No separate summability
+hypothesis is therefore required.
+
+### `translation`
+
+Counting measure is invariant under addition by any integer.  Mathlib's
+`measurePreserving_vadd` supplies the corresponding `MeasurePreserving` proof
+for `j ↦ -k + j`, and `Lp.compMeasurePreservingₗᵢ` turns composition with that
+map into a linear isometry on `L²`.  Since `-k + j = j - k`, this is precisely
+the translation used in convolution.  All later pointwise formulas are
+established as almost-everywhere equalities through the
+`Lp.compMeasurePreservingₗᵢ` API and remain private to the Fourier proof.

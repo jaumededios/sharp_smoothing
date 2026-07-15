@@ -1,7 +1,7 @@
 import JoseSmoothest.Fourier
 import Mathlib.Algebra.BigOperators.Group.Finset.Interval
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.Chebyshev.Basic
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Chebyshev.Orthogonality
-import Mathlib.Analysis.SpecialFunctions.Trigonometric.Chebyshev.RootsExtrema
 
 /-!
 # The Chebyshev-polynomial model of an admissible kernel
@@ -28,6 +28,7 @@ def kernelPolynomial (n : ℕ) (u : Kernel) : ℝ[X] :=
     ∑ k ∈ Finset.Icc 1 n,
       C (2 * u (k : ℤ)) * Polynomial.Chebyshev.T ℝ k
 
+/-- The polynomial associated to a kernel supported in `[-n, n]` has degree at most `n`. -/
 theorem kernelPolynomial_natDegree_le (n : ℕ) (u : Kernel) :
     (kernelPolynomial n u).natDegree ≤ n := by
   unfold kernelPolynomial
@@ -58,6 +59,7 @@ private theorem sum_Icc_one_eq_sum_range (n : ℕ) (f : ℕ → ℝ) :
   · intro j hj
     rfl
 
+/-- Evaluating the kernel polynomial at `cos ξ` gives the Fourier transform of the kernel. -/
 theorem kernelPolynomial_eval_cos
     (n : ℕ)
     (u : Kernel)
@@ -66,6 +68,7 @@ theorem kernelPolynomial_eval_cos
     (ξ : ℝ) :
     (kernelPolynomial n u).eval (Real.cos ξ) = kernelFourierTransform u ξ := by
   classical
+  -- Pair the terms at opposite indices using symmetry of the kernel and cosine.
   let f : ℤ → ℝ := fun k ↦ u k * Real.cos ((k : ℝ) * ξ)
   have hf_even : Function.Even f := by
     intro k
@@ -83,7 +86,7 @@ theorem kernelPolynomial_eval_cos
     simp
   rw [hfourier]
   unfold kernelPolynomial
-  simp only [eval_add, eval_C, eval_finset_sum, eval_mul,
+  simp only [eval_add, eval_C, eval_finsetSum, eval_mul,
     Polynomial.Chebyshev.T_real_cos, f, Int.cast_natCast]
   rw [sum_Icc_one_eq_sum_range, Finset.sum_Icc_of_even_eq_range hf_even n,
     Finset.sum_range_succ']
@@ -92,6 +95,7 @@ theorem kernelPolynomial_eval_cos
   ring_nf
   rw [Finset.sum_mul]
 
+/-- A normalized kernel gives a kernel polynomial whose value at `1` is `1`. -/
 theorem kernelPolynomial_eval_one
     (n : ℕ)
     (u : Kernel)
@@ -105,6 +109,7 @@ theorem kernelPolynomial_eval_one
   unfold kernelFourierTransform
   simpa using normalized
 
+/-- A kernel with nonnegative Fourier transform gives a polynomial nonnegative on `[-1, 1]`. -/
 theorem kernelPolynomial_nonnegative_on_Icc
     (n : ℕ)
     (u : Kernel)
@@ -158,6 +163,7 @@ theorem fourthOrderMultiplierNorm_eq_four_mul_weightedPolynomialNorm
   let A : Set ℝ := {r : ℝ | ∃ ξ : ℝ, r = fourthOrderMultiplier u ξ}
   let B : Set ℝ := {r : ℝ | ∃ x ∈ Set.Icc (-1 : ℝ) 1,
     r = |(1 - x) ^ 2 * p.eval x|}
+  -- First express every multiplier value through the polynomial symbol.
   have hvalue (ξ : ℝ) : fourthOrderMultiplier u ξ =
       4 * |(1 - Real.cos ξ) ^ 2 * p.eval (Real.cos ξ)| := by
     unfold fourthOrderMultiplier p
@@ -171,6 +177,7 @@ theorem fourthOrderMultiplierNorm_eq_four_mul_weightedPolynomialNorm
     simpa [B, p] using weightedPolynomialRange_bddAbove (kernelPolynomial n u)
   have hA_nonempty : A.Nonempty :=
     ⟨fourthOrderMultiplier u 0, 0, rfl⟩
+  -- The pointwise identity transfers boundedness from the polynomial range.
   have hA_bdd : BddAbove A := by
     obtain ⟨M, hM⟩ := hB_bdd
     refine ⟨4 * M, ?_⟩
@@ -179,6 +186,7 @@ theorem fourthOrderMultiplierNorm_eq_four_mul_weightedPolynomialNorm
     apply mul_le_mul_of_nonneg_left _ (by norm_num)
     apply hM
     exact ⟨Real.cos ξ, ⟨Real.neg_one_le_cos ξ, Real.cos_le_one ξ⟩, rfl⟩
+  -- Compare the two suprema in each direction, using `arccos` for the reverse inequality.
   change sSup A = 4 * sSup B
   apply le_antisymm
   · apply csSup_le hA_nonempty
@@ -246,6 +254,7 @@ private theorem chebyshevInner_basis (m i : ℕ) :
 private theorem chebyshevInner_eq_coord (p : ℝ[X]) (m : ℕ) :
     chebyshevInner m p =
       (if m = 0 then Real.pi else Real.pi / 2) * chebyshevBasis.coord m p := by
+  -- Orthogonality determines both linear maps on every element of the basis.
   have hmaps : chebyshevInner m =
       (if m = 0 then Real.pi else Real.pi / 2) • chebyshevBasis.coord m := by
     apply chebyshevBasis.ext
@@ -261,6 +270,7 @@ private theorem chebyshevInner_eq_coord (p : ℝ[X]) (m : ℕ) :
 private theorem chebyshevCoefficient_eq_coord (p : ℝ[X]) (m : ℕ) :
     chebyshevCoefficient p m =
       if m = 0 then chebyshevBasis.coord m p else chebyshevBasis.coord m p / 2 := by
+  -- Rewrite the weighted interval integral using the Chebyshev measure.
   have hint :
       (∫ x in (-1 : ℝ)..1,
           p.eval x * chebyshevT m x / Real.sqrt (1 - x ^ 2)) =
@@ -280,11 +290,13 @@ private theorem chebyshevCoefficient_eq_coord (p : ℝ[X]) (m : ℕ) :
   · simp only [hm, if_false]
     field_simp [Real.pi_ne_zero]
 
+/-- The `m`-th Chebyshev coefficient of a kernel polynomial is its kernel coefficient. -/
 theorem chebyshevCoefficient_kernelPolynomial
     (n m : ℕ)
     (hm : m ≤ n)
     (u : Kernel) :
     chebyshevCoefficient (kernelPolynomial n u) m = u m := by
+  -- Write the kernel polynomial explicitly in the Chebyshev basis.
   have hkpoly : kernelPolynomial n u =
       (u 0) • chebyshevBasis 0 +
         ∑ k ∈ Finset.Icc 1 n, (2 * u (k : ℤ)) • chebyshevBasis k := by
@@ -292,7 +304,9 @@ theorem chebyshevCoefficient_kernelPolynomial
   rw [chebyshevCoefficient_eq_coord, hkpoly]
   by_cases hm0 : m = 0
   · subst m
-    simp
+    simp only [↓reduceIte, Basis.coord_apply, map_add, map_smul, Basis.repr_self,
+      smul_eq_mul, mul_one, map_sum, Finsupp.single_eq_same, CharP.cast_eq_zero,
+      add_eq_left]
     apply Finset.sum_eq_zero
     intro c hc
     rw [Finsupp.single_apply]
@@ -329,6 +343,8 @@ private theorem chebyshevCoord_eq_zero_of_natDegree_lt
   have hm_le : m ≤ n := hsupp hm_support
   omega
 
+/-- Two polynomials of degree at most `n` are equal when their first `n + 1`
+Chebyshev coefficients agree. -/
 theorem polynomial_eq_of_chebyshevCoefficient_eq
     {n : ℕ}
     {p q : ℝ[X]}

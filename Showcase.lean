@@ -1,12 +1,12 @@
 import JoseSmoothest.WeightedExtremal
 
 /-!
-# Trusted comparator challenge for the smoothest-average theorem
+# Comparator statement showcase for the smoothest-average theorem
 
 This file is the statement side of the `leanprover/comparator` boundary.  It
-contains the paper-facing claims that a reviewer must trust.  The candidate
-declarations in `Solution.lean` must have definitionally identical types and
-must pass the configured axiom check.
+contains the paper-facing claims whose fidelity a reviewer must inspect.  The
+candidate declarations in `Solution.lean` must have definitionally identical
+types and must pass the configured axiom check.
 -/
 
 noncomputable section
@@ -15,7 +15,7 @@ namespace JoseSmoothestComparator
 
 open JoseSmoothest
 
-/-- The explicit coefficient formula for the unique equality-case kernel. -/
+/-- The explicit coefficient formula characterizing an equality case. -/
 def IsExtremalKernel (n : ℕ) (u : Kernel) : Prop :=
   ∀ m : ℕ, m ≤ n →
     let coefficient :=
@@ -35,8 +35,8 @@ theorem smoothestAverage_inequality
     sharpConstant n ≤ fourthOrderSmoothness u := by
   sorry
 
-/-- Theorem 1.4: equality holds exactly for the kernel with the displayed
-Chebyshev coefficient formula. -/
+/-- Theorem 1.4: for an admissible kernel, equality is equivalent to the
+displayed Chebyshev coefficient formula. -/
 theorem smoothestAverage_eq_iff
     (n : ℕ)
     (n_positive : 0 < n)

@@ -6,9 +6,31 @@ import Mathlib.MeasureTheory.Measure.Count
 /-!
 # Fourier representation of finite convolution
 
-This file builds the missing Fourier equivalence between complex `L²` for
-counting measure on `ℤ` and complex `L²` on the circle.  It then identifies
-the fourth-order convolution norm with its scalar multiplier norm.
+This file builds a Fourier equivalence between complex `L²` for counting measure on `ℤ`
+and complex `L²` on the circle. It then identifies the fourth-order convolution norm
+with its scalar multiplier norm.
+
+## Main definitions
+
+* `JoseSmoothest.kernelFourierTransform`: the real Fourier symbol of a finite kernel.
+* `JoseSmoothest.IsAdmissibleKernel`: the hypotheses on kernels in Theorem 1.4.
+* `JoseSmoothest.fourthOrderSmoothness`: the norm of fourth difference after averaging.
+* `JoseSmoothest.fourthOrderMultiplierNorm`: the supremum of the scalar multiplier.
+
+## Main results
+
+* `JoseSmoothest.fourthOrderSmoothness_eq_multiplierNorm`: equation (3.3) of the paper.
+* `JoseSmoothest.fourthOrderMultiplier_le_smoothness`: the pointwise multiplier bound.
+
+## Proof outline
+
+Singleton indicators give a Hilbert basis of complex counting-measure `L²`. Matching this
+basis with Mathlib's Fourier basis produces an isometric equivalence to circle `L²`.
+Translations become multiplication by characters, so finite convolution and fourth
+difference become multiplication by a continuous symbol. The operator norm of that
+multiplication map is its uniform norm. Finally, complexification preserves the norm of
+the real operator, and symmetry identifies the complex kernel symbol with its real cosine
+transform.
 -/
 
 noncomputable section
@@ -29,6 +51,30 @@ def IsAdmissibleKernel (n : ℕ) (u : Kernel) : Prop :=
   u.sum (fun _ a ↦ a) = 1 ∧
   ∀ ξ : ℝ, 0 ≤ kernelFourierTransform u ξ
 
+namespace IsAdmissibleKernel
+
+/-- An admissible kernel vanishes outside `[-n, n]`. -/
+theorem support {n : ℕ} {u : Kernel} (h : IsAdmissibleKernel n u) :
+    ∀ k : ℤ, k ∉ Finset.Icc (-(n : ℤ)) n → u k = 0 :=
+  h.1
+
+/-- An admissible kernel is symmetric. -/
+theorem symmetric {n : ℕ} {u : Kernel} (h : IsAdmissibleKernel n u) :
+    ∀ k : ℤ, u (-k) = u k :=
+  h.2.1
+
+/-- The coefficients of an admissible kernel sum to one. -/
+theorem sum_eq_one {n : ℕ} {u : Kernel} (h : IsAdmissibleKernel n u) :
+    u.sum (fun _ a ↦ a) = 1 :=
+  h.2.2.1
+
+/-- The Fourier transform of an admissible kernel is nonnegative. -/
+theorem fourier_nonnegative {n : ℕ} {u : Kernel} (h : IsAdmissibleKernel n u) :
+    ∀ ξ : ℝ, 0 ≤ kernelFourierTransform u ξ :=
+  h.2.2.2
+
+end IsAdmissibleKernel
+
 /-- The operator norm of `∇⁴` after convolution by `u`. -/
 def fourthOrderSmoothness (u : Kernel) : ℝ :=
   ‖(differenceOperator ^ 4).comp (averagingOperator u)‖
@@ -40,6 +86,8 @@ def fourthOrderMultiplier (u : Kernel) (ξ : ℝ) : ℝ :=
 /-- The supremum of the fourth-order multiplier over all real frequencies. -/
 def fourthOrderMultiplierNorm (u : Kernel) : ℝ :=
   sSup {r : ℝ | ∃ ξ : ℝ, r = fourthOrderMultiplier u ξ}
+
+/-! ## Fourier series on counting-measure `L²` -/
 
 private abbrev ComplexSequence := Lp ℂ 2 (Measure.count : Measure ℤ)
 
@@ -126,6 +174,11 @@ private theorem circleMultiply_norm_le (m : C(AddCircle (2 * Real.pi), ℂ)) :
   rw [hx, norm_mul]
   exact mul_le_mul_of_nonneg_right (m.norm_coe_le_norm x) (norm_nonneg _)
 
+/-
+The reverse norm inequality is obtained by testing on the indicator of an open set on
+which `‖m x‖` is larger than a fixed number strictly between the two candidate norms.
+Every nonempty open set has positive Haar measure, so this test function is nonzero.
+-/
 private theorem circleMultiply_norm (m : C(AddCircle (2 * Real.pi), ℂ)) :
     ‖circleMultiply m‖ = ‖m‖ := by
   apply le_antisymm (circleMultiply_norm_le m)
@@ -171,8 +224,8 @@ private theorem circleMultiply_norm (m : C(AddCircle (2 * Real.pi), ℂ)) :
     rw [hsm, Pi.smul_apply, hmul, hf]
     by_cases hy : y ∈ U
     · rw [Set.indicator_of_mem hy]
-      simp only [smul_eq_mul, mul_one, norm_mul, Complex.norm_real,
-        Real.norm_eq_abs, norm_one, one_mul, abs_of_pos hcpos]
+      simp only [smul_eq_mul, mul_one, Complex.norm_real, Real.norm_eq_abs,
+        one_mul, abs_of_pos hcpos]
       exact (show c ≤ ‖m y‖ from (show c < ‖m y‖ from hy).le)
     · rw [Set.indicator_of_notMem hy]
       simp
@@ -236,7 +289,6 @@ private theorem circleMultiply_smul (c : ℂ) (m : C(AddCircle (2 * Real.pi), �
   ext f
   filter_upwards [circleMultiply_coeFn (c • m) f, circleMultiply_coeFn m f,
     Lp.coeFn_smul c (circleMultiply m f)] with x hcm hm hout
-  change circleMultiply (c • m) f x = (c • circleMultiply m) f x
   rw [hcm, ContinuousMap.smul_apply, smul_eq_mul]
   change (c * m x) * f x = (c • circleMultiply m f) x
   rw [hout, Pi.smul_apply, hm]
@@ -413,7 +465,8 @@ private theorem sequenceFourierEquiv_complexFourthOrder (u : Kernel) (f : Comple
 
 private theorem complexFourthOrderOperator_norm (u : Kernel) :
     ‖complexFourthOrderOperator u‖ = ‖fourthCircleSymbol u‖ := by
-  have hforward : ‖complexFourthOrderOperator u‖ ≤ ‖circleMultiply (fourthCircleSymbol u)‖ := by
+  have hforward :
+      ‖complexFourthOrderOperator u‖ ≤ ‖circleMultiply (fourthCircleSymbol u)‖ := by
     apply ContinuousLinearMap.opNorm_le_bound _ (norm_nonneg _)
     intro f
     calc
@@ -444,7 +497,9 @@ private theorem complexFourthOrderOperator_norm (u : Kernel) :
   rw [← circleMultiply_norm (fourthCircleSymbol u)]
   exact le_antisymm hforward hbackward
 
-/-! The following maps compare real and complex `L²`.  They are kept private:
+/-! ## Comparison with real `L²`
+
+The following maps compare real and complex `L²`. They are kept private:
 the public API only needs the resulting equality of operator norms. -/
 
 private def complexOfReal : Sequence →L[ℝ] ComplexSequence :=
@@ -609,6 +664,11 @@ private theorem complex_reconstruction (f : ComplexSequence) :
   rw [mul_comm]
   exact (Complex.re_add_im (f x)).symm
 
+/-
+For one inequality, embed real sequences isometrically into complex sequences. For the
+other, decompose a complex sequence into real and imaginary parts. The Pythagorean norm
+identity then bounds both components by the norm of the real operator.
+-/
 private theorem fourthOrder_real_complex_norm (u : Kernel) :
     ‖((differenceOperator ^ 4).comp (averagingOperator u))‖ =
       ‖complexFourthOrderOperator u‖ := by
@@ -659,6 +719,8 @@ private theorem fourthOrder_real_complex_norm (u : Kernel) :
       _ = (‖R‖ * ‖f‖) ^ 2 := by ring
   change ‖R‖ = ‖C‖
   exact le_antisymm hreal_le hcomplex_le
+
+/-! ## Evaluation of the circle symbol -/
 
 private theorem fourier_coe_two_pi (k : ℤ) (ξ : ℝ) :
     fourier k (ξ : AddCircle (2 * Real.pi)) =
@@ -811,6 +873,8 @@ private theorem fourthCircleSymbol_norm_eq_multiplierNorm
     rintro r ⟨ξ, rfl⟩
     rw [← fourthCircleSymbol_norm_coe u symmetric ξ]
     exact (fourthCircleSymbol u).norm_coe_le_norm (ξ : AddCircle (2 * Real.pi))
+
+/-! ## Operator norm identities -/
 
 /-- Equation (3.3): the operator norm equals the multiplier supremum. -/
 theorem fourthOrderSmoothness_eq_multiplierNorm

@@ -3,7 +3,7 @@
 ## Purpose
 
 This is the umbrella module for the complete formalization of Theorem 1.4,
-including its sharp inequality and equality characterization.
+including its lower bound and conditional equality characterization.
 
 The target is the paper's **first main result**, Theorem 1.4: the sharp
 fourth-difference estimate for normalized symmetric kernels supported on

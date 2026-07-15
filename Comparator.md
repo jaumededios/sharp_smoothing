@@ -4,7 +4,7 @@ This repository has one comparator target:
 
 - `Comparator/config.json`
 
-The challenge module is `Challenge`, which imports the mathematical
+The challenge module is `Showcase`, which imports the mathematical
 prerequisites but not the final proof module and states the two parts of
 Theorem 1.4 with intentional `sorry` bodies. The solution module is
 `Solution`, which repeats the same public surface and bridges it to

@@ -1,6 +1,7 @@
 import JoseSmoothest.Alternation
 import JoseSmoothest.Chebyshev
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Chebyshev.Extremal
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.Chebyshev.RootsExtrema
 
 /-!
 # The weighted Chebyshev extremal problem
@@ -34,6 +35,16 @@ def transformedChebyshevPolynomial (N : ℕ) : ℝ[X] :=
 def weightedExtremalPolynomial (N : ℕ) : ℝ[X] :=
   transformedChebyshevPolynomial N / (C 1 - X) ^ 2
 
+/-- A polynomial feasible for the weighted extremal problem of order `N`. -/
+structure IsAdmissibleWeightedPolynomial (N : ℕ) (p : ℝ[X]) : Prop where
+  /-- The degree bound in the weighted extremal problem. -/
+  degree_le : p.natDegree ≤ N - 2
+  /-- Nonnegativity on the approximation interval. -/
+  nonnegative : ∀ x ∈ Set.Icc (-1 : ℝ) 1, 0 ≤ p.eval x
+  /-- Normalization at the right endpoint. -/
+  eval_one : p.eval 1 = 1
+
+/-- The sharp weighted Chebyshev constant is nonnegative. -/
 theorem weightedChebyshevConstant_nonneg (N : ℕ) :
     0 ≤ weightedChebyshevConstant N := by
   unfold weightedChebyshevConstant
@@ -99,7 +110,7 @@ private theorem chebyshev_derivative_eval_endpoint
       ((N : ℝ) - 1 + 1) * θ = (N : ℝ) * θ := by ring
       _ = Real.pi := hmul
   rw [Polynomial.Chebyshev.T_derivative_eq_U, eval_mul]
-  simp only [eval_intCast, Int.cast_natCast]
+  simp only [Int.cast_natCast]
   rw [hu_zero, mul_zero]
 
 private theorem affineScale_pos (N : ℕ) (hN : 2 ≤ N) :
@@ -111,7 +122,7 @@ private theorem affineScale_pos (N : ℕ) (hN : 2 ≤ N) :
     constructor <;> linarith [Real.pi_pos]
   have hdouble : 1 + Real.cos θ = 2 * Real.cos (θ / 2) ^ 2 := by
     rw [show θ = 2 * (θ / 2) by ring, Real.cos_two_mul]
-    ring
+    ring_nf
   unfold affineScale
   change 0 < (1 + Real.cos θ) / 2
   rw [hdouble]
@@ -189,7 +200,7 @@ private theorem transformedChebyshevPolynomial_second_derivative_formula (N : �
   simp only [transformedChebyshevPolynomial, Function.iterate_succ_apply,
     Function.iterate_zero_apply, derivative_mul, derivative_C, zero_mul,
     zero_add, derivative_add, derivative_one, derivative_comp,
-    affineChebyshevArgument_derivative, mul_zero, add_zero, eval_mul,
+    affineChebyshevArgument_derivative, eval_mul,
     eval_C, eval_comp, affineChebyshevArgument_eval_one]
   simp [transformedScale, affineScale]
   ring
@@ -205,7 +216,7 @@ private theorem chebyshev_second_derivative_eval_endpoint
   have he := congrArg
     (fun p : ℝ[X] ↦ p.eval (Real.cos (Real.pi / (N : ℝ)))) h
   simp only [eval_mul, eval_sub, eval_one, eval_pow, eval_X,
-    Int.cast_pow, Int.cast_natCast] at he
+    Int.cast_natCast] at he
   rw [chebyshev_derivative_eval_endpoint N hN,
     chebyshev_eval_endpoint N hN] at he
   norm_num at he ⊢
@@ -230,7 +241,9 @@ private theorem transformedChebyshevPolynomial_second_derivative_eval_one
     constructor <;> linarith [Real.pi_pos]
   have hcosdouble : Real.cos θ = 2 * Real.cos (θ / 2) ^ 2 - 1 := by
     rw [show θ = 2 * (θ / 2) by ring, Real.cos_two_mul]
-    ring
+    ring_nf
+  -- The half-angle identity converts the normalization factor into the
+  -- coefficient occurring in the Chebyshev differential equation.
   have hhalf :
       Real.tan (θ / 2) ^ 2 * (1 + Real.cos θ) ^ 2 =
         1 - Real.cos θ ^ 2 := by
@@ -255,6 +268,7 @@ private theorem transformedChebyshevPolynomial_second_derivative_eval_one
       _ = 2 / (N : ℝ) ^ 2 * (1 - Real.cos θ ^ 2) := by rw [hhalf]
       _ = 2 * (1 - Real.cos θ ^ 2) / (N : ℝ) ^ 2 := by ring
   rw [hscale]
+  -- Substituting the differential equation leaves a scalar cancellation.
   have hsecond := chebyshev_second_derivative_eval_endpoint N hN
   change (1 - Real.cos θ ^ 2) *
       (derivative^[2] (Polynomial.Chebyshev.T ℝ N)).eval (Real.cos θ) =
@@ -303,9 +317,11 @@ private theorem transformedChebyshevPolynomial_eq_mul_weightedExtremal
   nth_rewrite 2 [← modByMonic_add_div q d]
   rw [hmod, zero_add]
 
+/-- The weighted extremal polynomial has the prescribed value at `1`. -/
 theorem weightedExtremalPolynomial_eval_one
     (N : ℕ) (hN : 2 ≤ N) :
     (weightedExtremalPolynomial N).eval 1 = 1 := by
+  -- Differentiate the exact factorization twice at its double root.
   have h := transformedChebyshevPolynomial_eq_mul_weightedExtremal N hN
   have hd := congrArg
     (fun r : ℝ[X] ↦ (derivative^[2] r).eval 1) h
@@ -345,8 +361,9 @@ private theorem transformedChebyshevPolynomial_natDegree_le (N : ℕ) :
       simp only [Int.natAbs_natCast]
       simpa using Nat.mul_le_mul_left N (affineChebyshevArgument_natDegree_le N)
 
+/-- The optimizer has the degree required in Proposition 1.6. -/
 theorem weightedExtremalPolynomial_natDegree_le
-    (N : ℕ) (hN : 2 ≤ N) :
+    (N : ℕ) (_hN : 2 ≤ N) :
     (weightedExtremalPolynomial N).natDegree ≤ N - 2 := by
   unfold weightedExtremalPolynomial
   rw [← divByMonic_eq_div _ denominator_monic]
@@ -386,6 +403,7 @@ private theorem transformedChebyshevPolynomial_bounds
   have hs := (transformedScale_pos N hN).le
   constructor <;> nlinarith
 
+/-- The weighted extremal polynomial is nonnegative on `[-1, 1]`. -/
 theorem weightedExtremalPolynomial_nonnegative
     (N : ℕ) (hN : 2 ≤ N) :
     ∀ x ∈ Set.Icc (-1 : ℝ) 1,
@@ -402,6 +420,14 @@ theorem weightedExtremalPolynomial_nonnegative
   have hd : 0 < (1 - x) ^ 2 :=
     sq_pos_of_ne_zero (sub_ne_zero.mpr (Ne.symm hx1))
   nlinarith
+
+/-- The explicit optimizer is feasible for the weighted extremal problem. -/
+theorem weightedExtremalPolynomial_isAdmissible
+    (N : ℕ) (hN : 2 ≤ N) :
+    IsAdmissibleWeightedPolynomial N (weightedExtremalPolynomial N) where
+  degree_le := weightedExtremalPolynomial_natDegree_le N hN
+  nonnegative := weightedExtremalPolynomial_nonnegative N hN
+  eval_one := weightedExtremalPolynomial_eval_one N hN
 
 private def transformedPeakPoint (N : ℕ) : ℝ :=
   (1 + Real.cos (2 * (Real.pi / (N : ℝ)))) / affineScale N - 1
@@ -467,6 +493,7 @@ private theorem weightedChebyshevConstant_eq_two_mul_transformedScale (N : ℕ) 
   unfold weightedChebyshevConstant transformedScale
   ring
 
+/-- The optimizer attains the sharp weighted Chebyshev constant. -/
 theorem weightedExtremalPolynomial_norm
     (N : ℕ) (hN : 2 ≤ N) :
     weightedPolynomialNorm (weightedExtremalPolynomial N) =
@@ -475,6 +502,8 @@ theorem weightedExtremalPolynomial_norm
   let q := transformedChebyshevPolynomial N
   let B : Set ℝ := {r : ℝ | ∃ x ∈ Set.Icc (-1 : ℝ) 1,
     r = |(1 - x) ^ 2 * S.eval x|}
+  -- Exact division identifies every weighted value of `S` with a value of
+  -- the transformed Chebyshev numerator.
   have hmul_eval (x : ℝ) :
       (1 - x) ^ 2 * S.eval x = q.eval x := by
     have h := congrArg (fun r : ℝ[X] ↦ r.eval x)
@@ -488,6 +517,8 @@ theorem weightedExtremalPolynomial_norm
     rw [show q.eval (transformedPeakPoint N) = 2 * transformedScale N by
       exact transformedChebyshevPolynomial_eval_peak N hN]
     exact (weightedChebyshevConstant_eq_two_mul_transformedScale N).symm
+  -- The pointwise upper bound supplies boundedness of the defining range,
+  -- while the transformed second Chebyshev node supplies equality.
   have hB_nonempty : B.Nonempty := by
     refine ⟨|(1 - 0) ^ 2 * S.eval 0|, 0, ?_, rfl⟩
     constructor <;> norm_num
@@ -523,12 +554,14 @@ def extremalPolynomial (n : ℕ) (x : ℝ) : ℝ :=
         (((1 + Real.cos (Real.pi / ((n : ℝ) + 2))) / 2) *
           (x + 1) - 1))
 
+/-- The paper's final constant is four times the weighted Chebyshev constant. -/
 theorem sharpConstant_eq_four_mul_weightedChebyshevConstant (n : ℕ) :
     sharpConstant n = 4 * weightedChebyshevConstant (n + 2) := by
   unfold sharpConstant weightedChebyshevConstant
   push_cast
-  ring
+  ring_nf
 
+/-- The polynomial quotient agrees with the paper's pointwise formula. -/
 theorem weightedExtremalPolynomial_eval (n : ℕ) (x : ℝ) :
     (weightedExtremalPolynomial (n + 2)).eval x =
       extremalPolynomial n x := by
@@ -548,7 +581,8 @@ theorem weightedExtremalPolynomial_eval (n : ℕ) (x : ℝ) :
     have hden : (1 - x) ^ 2 ≠ 0 :=
       pow_ne_zero _ (sub_ne_zero.mpr (Ne.symm hx))
     field_simp [hden] at heval ⊢
-    convert heval using 1 <;> ring
+    convert heval using 1
+    all_goals ring_nf
 
 /-! ### Alternation proof of the sharp lower bound and uniqueness -/
 
@@ -673,6 +707,7 @@ private theorem weightedUniqueness_core
     (hSq : (C 1 - X) ^ 2 * S = transformedChebyshevPolynomial N)
     (hnorm : weightedPolynomialNorm p ≤ weightedChebyshevConstant N) :
     p = S := by
+  -- Since `p` and `S` agree at `1`, factor their difference by `X - 1`.
   let d : ℝ[X] := p - S
   let r : ℝ[X] := d /ₘ (X - C 1)
   have hdroot : d.IsRoot 1 := by
@@ -688,6 +723,9 @@ private theorem weightedUniqueness_core
   let s : ℝ[X] := ((-1 : ℝ) ^ N) • r
   have hsdeg : s.natDegree < N - 2 :=
     (natDegree_smul_le ((-1 : ℝ) ^ N) r).trans_lt hrdeg
+  -- At the transformed Chebyshev nodes, nonnegativity controls the zero
+  -- nodes and the norm bound controls the peak nodes. Both cases give the
+  -- same alternating sign condition on the quotient.
   have halt_r (i : Fin (N - 2 + 1)) :
       0 ≤ (-1 : ℝ) ^ (N - (i : ℕ)) *
         r.eval (transformedAlternationNode N i) := by
@@ -769,9 +807,10 @@ private theorem weightedUniqueness_core
                   r.eval (transformedAlternationNode N i)) := by ring
           _ = (-1 : ℝ) ^ (N - (i : ℕ)) *
               r.eval (transformedAlternationNode N i) := by rw [hsquare, one_mul]
+  -- The weak alternation theorem forces the quotient, hence the original
+  -- difference, to vanish.
   have hs_zero : s = 0 := polynomial_eq_zero_of_alternating_signs
-    (m := N - 2) (by omega) hsdeg
-      (transformedAlternationNode_strictMono N hN) halt_s
+    (m := N - 2) hsdeg (transformedAlternationNode_strictMono N hN) halt_s
   have hr_zero : r = 0 := by
     have hscalar : ((-1 : ℝ) ^ N) ≠ 0 := pow_ne_zero _ (by norm_num)
     exact (smul_eq_zero.mp hs_zero).resolve_left hscalar
@@ -842,5 +881,25 @@ theorem weightedPolynomialNorm_eq_iff
   · rintro rfl
     exact weightedExtremalPolynomial_norm N hN
 
+namespace IsAdmissibleWeightedPolynomial
+
+/-- The sharp lower bound, packaged for an admissible weighted polynomial. -/
+theorem norm_ge
+    {N : ℕ} {p : ℝ[X]}
+    (hp : IsAdmissibleWeightedPolynomial N p)
+    (hN : 2 ≤ N) :
+    weightedChebyshevConstant N ≤ weightedPolynomialNorm p :=
+  weightedPolynomialNorm_ge N hN p hp.degree_le hp.nonnegative hp.eval_one
+
+/-- The equality characterization, packaged for an admissible weighted polynomial. -/
+theorem norm_eq_iff
+    {N : ℕ} {p : ℝ[X]}
+    (hp : IsAdmissibleWeightedPolynomial N p)
+    (hN : 2 ≤ N) :
+    weightedPolynomialNorm p = weightedChebyshevConstant N ↔
+      p = weightedExtremalPolynomial N :=
+  weightedPolynomialNorm_eq_iff N hN p hp.degree_le hp.nonnegative hp.eval_one
+
+end IsAdmissibleWeightedPolynomial
 
 end JoseSmoothest

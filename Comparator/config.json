@@ -1,5 +1,5 @@
 {
-  "challenge_module": "Challenge",
+  "challenge_module": "Showcase",
   "solution_module": "Solution",
   "theorem_names": [
     "JoseSmoothestComparator.smoothestAverage_inequality",

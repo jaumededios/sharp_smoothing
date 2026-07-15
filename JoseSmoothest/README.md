@@ -12,7 +12,7 @@ The internal modules follow the dependency order of the proof.
   uniqueness.
 - `WeightedExtremal.lean`: Proposition 1.6, including construction, sharp
   norm, lower bound, and the unique equality case.
-- `Challenge.lean`: assembly of the sharp inequality and coefficient-level
+- `Challenge.lean`: assembly of the lower bound and coefficient-level
   equality characterization in Theorem 1.4.
 
 The root module `JoseSmoothest.lean` imports `JoseSmoothest.Challenge` and

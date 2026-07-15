@@ -4,7 +4,12 @@ import JoseSmoothest.Basic
 # Difference and averaging operators
 
 This file bundles the forward difference and finite convolution as continuous
-linear operators on `ℓ²(ℤ)`.
+linear operators on `L²(ℤ)`.
+
+## Main definitions
+
+* `JoseSmoothest.differenceOperator`: the forward-difference operator.
+* `JoseSmoothest.averagingOperator`: convolution by a finitely supported kernel.
 -/
 
 noncomputable section

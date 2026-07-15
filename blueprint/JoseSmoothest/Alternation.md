@@ -2,16 +2,22 @@
 
 ## Purpose
 
-This module isolates the root-counting form of the alternation principle.  It
+This module isolates an algebraic form of the alternation principle.  It
 is the only genuinely reusable approximation-theory lemma needed for the
 weighted Chebyshev argument.  Weak inequalities are essential: at an
 alternation node the competing polynomial may also vanish, in which case the
-proof must count the resulting root with its correct multiplicity.
+Lagrange-interpolation proof must allow a zero summand rather than demand a
+strict sign change.
 
 ## Imports
 
 ```lean
-import Mathlib
+import Mathlib.Algebra.Order.BigOperators.Ring.Finset
+import Mathlib.Data.Real.Basic
+import Mathlib.LinearAlgebra.Lagrange
+import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.Order
+import Mathlib.Tactic.Ring
 ```
 
 ## Public declarations
@@ -27,7 +33,6 @@ open Polynomial
 `m + 1` strictly ordered points unless it is zero. -/
 theorem polynomial_eq_zero_of_alternating_signs
     {m : ℕ}
-    (hm : 0 < m)
     {p : ℝ[X]}
     (hdeg : p.natDegree < m)
     {x : Fin (m + 1) → ℝ}

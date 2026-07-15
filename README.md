@@ -13,15 +13,23 @@ and José Madrid.
   2⁶ / (n + 2)² · tan²(π / (2n + 4)).
 ```
 
-Equality holds exactly for the kernel whose coefficients are given by the
-Chebyshev integral formula (1.6) in the paper.
+For an admissible kernel, equality is equivalent to its coefficients being
+given by the Chebyshev integral formula (1.6) in the paper. The present Lean
+development does not separately construct that kernel and prove it
+admissible, so attainment of the bound is not yet formalized.
+
+For a reader-facing account of what this statement means in Lean, how the
+formal proof follows the mathematics, and what the comparator and Lean kernel
+verify, see [Formalization Explanation](FORMALIZATION_EXPLANATION.md).
+For the engineering audit, refactor summary, and proposed upstream
+contributions, see [Mathlib-Quality Review](MATHLIB_REVIEW.md).
 
 ## Lean Entry Points
 
-The public files separate the trusted theorem surface from its proof.
+The public files separate the statement surface from its proof.
 
-- [Challenge.lean](Challenge.lean): the two paper-facing statements used as
-  the trusted comparator challenge. Its two proof bodies are intentional
+- [Showcase.lean](Showcase.lean): the two paper-facing statements used as
+  the comparator specification. Its two proof bodies are intentional
   `sorry` placeholders.
 - [Solution.lean](Solution.lean): the sorry-free companion with exactly the
   same theorem surface, bridged to the internal proof library.
@@ -36,6 +44,9 @@ The public files separate the trusted theorem surface from its proof.
   detailed natural-language proofs.
 - `Comparator/`: configuration for `leanprover/comparator`.
 - `scripts/`: pinned local comparator setup and execution helpers.
+- `FORMALIZATION_EXPLANATION.md`: a non-technical guide to the statement,
+  proof architecture, and trust boundary.
+- `MATHLIB_REVIEW.md`: the code-quality audit and Mathlib extraction plan.
 - `formalization.yaml`: provenance, scope, automation, fidelity, and
   source-to-Lean alignment metadata.
 
@@ -49,13 +60,13 @@ The project is pinned to Lean and Mathlib `v4.32.0`.
 
 ```bash
 lake exe cache get
-lake build Challenge
+lake build Showcase
 lake build Solution
 lake build JoseSmoothest
 lake build
 ```
 
-The default targets are `JoseSmoothest`, `Challenge`, and `Solution`.
+The default targets are `JoseSmoothest`, `Showcase`, and `Solution`.
 
 ## Comparator Check
 

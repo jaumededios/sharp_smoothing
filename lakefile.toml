@@ -1,7 +1,7 @@
 name = "JoseSmoothest"
 version = "0.1.0"
 keywords = ["math"]
-defaultTargets = ["JoseSmoothest", "Challenge", "Solution"]
+defaultTargets = ["JoseSmoothest", "Showcase", "Solution"]
 testDriver = "workspace_test"
 
 [leanOptions]
@@ -19,7 +19,7 @@ rev = "v4.32.0"
 name = "JoseSmoothest"
 
 [[lean_lib]]
-name = "Challenge"
+name = "Showcase"
 
 [[lean_lib]]
 name = "Solution"

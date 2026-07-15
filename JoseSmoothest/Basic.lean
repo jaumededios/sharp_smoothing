@@ -3,8 +3,14 @@ import Mathlib.MeasureTheory.Function.LpSpace.DomAct.Basic
 /-!
 # Basic sequence spaces and translations
 
-This file contains real `L²(ℤ)` for counting measure, finitely supported
-kernels, and translations as linear isometries.
+This file introduces real `L²(ℤ)` for counting measure, finitely supported kernels, and
+translations as linear isometries.
+
+## Main definitions
+
+* `JoseSmoothest.Sequence`: the real Hilbert space `L²(ℤ)` for counting measure.
+* `JoseSmoothest.Kernel`: finitely supported real-valued kernels on `ℤ`.
+* `JoseSmoothest.translation`: translation of a sequence by an integer.
 -/
 
 noncomputable section

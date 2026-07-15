@@ -1,4 +1,9 @@
-import Mathlib
+import Mathlib.Algebra.Order.BigOperators.Ring.Finset
+import Mathlib.Data.Real.Basic
+import Mathlib.LinearAlgebra.Lagrange
+import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.Order
+import Mathlib.Tactic.Ring
 
 /-!
 # A weak alternation principle for real polynomials
@@ -85,18 +90,17 @@ private theorem signed_lagrange_term_nonnegative
       ((-1 : ℝ) ^ (i : ℕ) * p.eval (x i)) *
         ((-1 : ℝ) ^ (m - (i : ℕ)) *
           (∏ j ∈ (Finset.univ.erase i), (x i - x j))⁻¹) := by
-            have hpows : (-1 : ℝ) ^ m =
-                (-1 : ℝ) ^ (i : ℕ) * (-1 : ℝ) ^ (m - (i : ℕ)) := by
-              rw [← pow_add, Nat.add_sub_of_le hi]
-            rw [div_eq_mul_inv, hpows]
-            ring
+        have hpows : (-1 : ℝ) ^ m =
+            (-1 : ℝ) ^ (i : ℕ) * (-1 : ℝ) ^ (m - (i : ℕ)) := by
+          rw [← pow_add, Nat.add_sub_of_le hi]
+        rw [div_eq_mul_inv, hpows]
+        ring
     _ ≥ 0 := mul_nonneg (halt i) hsign.le
 
 /-- A polynomial of degree `< m` cannot have weakly alternating signs at
 `m + 1` strictly ordered points unless it is zero. -/
 theorem polynomial_eq_zero_of_alternating_signs
     {m : ℕ}
-    (hm : 0 < m)
     {p : ℝ[X]}
     (hdeg : p.natDegree < m)
     {x : Fin (m + 1) → ℝ}
@@ -107,6 +111,8 @@ theorem polynomial_eq_zero_of_alternating_signs
   classical
   by_cases hp : p = 0
   · exact hp
+  -- Lagrange interpolation identifies the forbidden leading coefficient
+  -- with a sum of barycentric terms.
   have hdegree : p.degree < (Finset.univ : Finset (Fin (m + 1))).card := by
     rw [Finset.card_univ, Fintype.card_fin, degree_eq_natDegree hp]
     norm_cast
@@ -128,6 +134,8 @@ theorem polynomial_eq_zero_of_alternating_signs
           (p.eval (x i) /
             ∏ j ∈ (Finset.univ.erase i), (x i - x j))) = 0 := by
     rw [← Finset.mul_sum, hsum, mul_zero]
+  -- After multiplying by the common sign, every summand is nonnegative.
+  -- Since their sum is zero, every summand vanishes.
   have hterm (i : Fin (m + 1)) :
       (-1 : ℝ) ^ m *
         (p.eval (x i) /
@@ -135,6 +143,8 @@ theorem polynomial_eq_zero_of_alternating_signs
     have hall := (Fintype.sum_eq_zero_iff_of_nonneg
       (fun i ↦ signed_lagrange_term_nonnegative hx halt i)).mp hsigned_sum
     exact congrFun hall i
+  -- The interpolation denominators are nonzero, so all node evaluations
+  -- vanish. A polynomial below the interpolation degree is then zero.
   have heval (i : Fin (m + 1)) : p.eval (x i) = 0 := by
     have hquot : p.eval (x i) /
         ∏ j ∈ (Finset.univ.erase i), (x i - x j) = 0 :=

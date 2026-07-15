@@ -5,14 +5,27 @@ import JoseSmoothest.WeightedExtremal
 
 This file assembles the Fourier reduction and the weighted Chebyshev extremal
 problem into Theorem 1.4 of Gaitán--Garzón--Madrid, including the coefficient
-description of the unique equality case.
+characterization of equality among admissible kernels.
 -/
 
 noncomputable section
 
 namespace JoseSmoothest
 
-/-- The explicit coefficient formula for the unique equality-case kernel. -/
+/-- An admissible kernel gives a feasible polynomial for the weighted
+extremal problem after the substitution `x = cos ξ`. -/
+theorem IsAdmissibleKernel.kernelPolynomial
+    {n : ℕ} {u : Kernel} (h : IsAdmissibleKernel n u) :
+    IsAdmissibleWeightedPolynomial (n + 2) (kernelPolynomial n u) where
+  degree_le := by
+    simpa using kernelPolynomial_natDegree_le n u
+  nonnegative :=
+    kernelPolynomial_nonnegative_on_Icc n u h.support h.symmetric
+      h.fourier_nonnegative
+  eval_one :=
+    kernelPolynomial_eval_one n u h.support h.symmetric h.sum_eq_one
+
+/-- The explicit coefficient formula characterizing an equality case. -/
 def IsExtremalKernel (n : ℕ) (u : Kernel) : Prop :=
   ∀ m : ℕ, m ≤ n →
     let coefficient :=
@@ -22,6 +35,9 @@ def IsExtremalKernel (n : ℕ) (u : Kernel) : Prop :=
             Real.sqrt (1 - x ^ 2)
     u m = coefficient ∧ u (-(m : ℤ)) = coefficient
 
+/-- For a symmetric kernel, the coefficient formula is equivalent to the
+corresponding identity between its kernel polynomial and the extremizer of the
+weighted polynomial problem. -/
 theorem isExtremalKernel_iff_kernelPolynomial_eq
     (n : ℕ)
     (u : Kernel)
@@ -59,68 +75,46 @@ theorem isExtremalKernel_iff_kernelPolynomial_eq
         chebyshevCoefficient_kernelPolynomial n m hm u]
     exact ⟨hpositive, (symmetric (m : ℤ)).trans hpositive⟩
 
-/-- Theorem 1.4, sharp inequality. -/
+/-- Theorem 1.4, lower bound with the paper's stated constant. -/
 theorem smoothestAverage_inequality
     (n : ℕ)
-    (n_positive : 0 < n)
     (u : Kernel)
     (admissible : IsAdmissibleKernel n u) :
     sharpConstant n ≤ fourthOrderSmoothness u := by
-  rcases admissible with ⟨support, symmetric, normalized, fourier_nonnegative⟩
-  have hdeg : (kernelPolynomial n u).natDegree ≤ (n + 2) - 2 := by
-    simpa using kernelPolynomial_natDegree_le n u
-  have hnonnegative : ∀ x ∈ Set.Icc (-1 : ℝ) 1,
-      0 ≤ (kernelPolynomial n u).eval x :=
-    kernelPolynomial_nonnegative_on_Icc n u support symmetric
-      fourier_nonnegative
-  have hone : (kernelPolynomial n u).eval 1 = 1 :=
-    kernelPolynomial_eval_one n u support symmetric normalized
   calc
     sharpConstant n =
         4 * weightedChebyshevConstant (n + 2) :=
       sharpConstant_eq_four_mul_weightedChebyshevConstant n
     _ ≤ 4 * weightedPolynomialNorm (kernelPolynomial n u) := by
       gcongr
-      exact weightedPolynomialNorm_ge (n + 2) (by omega)
-        (kernelPolynomial n u) hdeg hnonnegative hone
+      exact admissible.kernelPolynomial.norm_ge (by omega)
     _ = fourthOrderMultiplierNorm u :=
       (fourthOrderMultiplierNorm_eq_four_mul_weightedPolynomialNorm
-        n u support symmetric).symm
+        n u admissible.support admissible.symmetric).symm
     _ = fourthOrderSmoothness u :=
-      (fourthOrderSmoothness_eq_multiplierNorm u symmetric).symm
+      (fourthOrderSmoothness_eq_multiplierNorm u admissible.symmetric).symm
 
 /-- Theorem 1.4, equality characterization. -/
 theorem smoothestAverage_eq_iff
     (n : ℕ)
-    (n_positive : 0 < n)
     (u : Kernel)
     (admissible : IsAdmissibleKernel n u) :
     fourthOrderSmoothness u = sharpConstant n ↔
       IsExtremalKernel n u := by
-  rcases admissible with ⟨support, symmetric, normalized, fourier_nonnegative⟩
-  have hdeg : (kernelPolynomial n u).natDegree ≤ (n + 2) - 2 := by
-    simpa using kernelPolynomial_natDegree_le n u
-  have hnonnegative : ∀ x ∈ Set.Icc (-1 : ℝ) 1,
-      0 ≤ (kernelPolynomial n u).eval x :=
-    kernelPolynomial_nonnegative_on_Icc n u support symmetric
-      fourier_nonnegative
-  have hone : (kernelPolynomial n u).eval 1 = 1 :=
-    kernelPolynomial_eval_one n u support symmetric normalized
-  rw [fourthOrderSmoothness_eq_multiplierNorm u symmetric,
+  rw [fourthOrderSmoothness_eq_multiplierNorm u admissible.symmetric,
     fourthOrderMultiplierNorm_eq_four_mul_weightedPolynomialNorm
-      n u support symmetric,
+      n u admissible.support admissible.symmetric,
     sharpConstant_eq_four_mul_weightedChebyshevConstant]
   constructor
   · intro hequality
-    apply (isExtremalKernel_iff_kernelPolynomial_eq n u symmetric).2
-    apply (weightedPolynomialNorm_eq_iff (n + 2) (by omega)
-      (kernelPolynomial n u) hdeg hnonnegative hone).1
+    apply (isExtremalKernel_iff_kernelPolynomial_eq n u admissible.symmetric).2
+    apply (admissible.kernelPolynomial.norm_eq_iff (by omega)).1
     linarith
   · intro hextremal
     have hpolynomial :=
-      (isExtremalKernel_iff_kernelPolynomial_eq n u symmetric).1 hextremal
-    have hnorm := (weightedPolynomialNorm_eq_iff (n + 2) (by omega)
-      (kernelPolynomial n u) hdeg hnonnegative hone).2 hpolynomial
+      (isExtremalKernel_iff_kernelPolynomial_eq n u admissible.symmetric).1 hextremal
+    have hnorm :=
+      (admissible.kernelPolynomial.norm_eq_iff (by omega)).2 hpolynomial
     linarith
 
 end JoseSmoothest
