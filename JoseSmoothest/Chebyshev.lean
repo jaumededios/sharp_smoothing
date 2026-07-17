@@ -365,4 +365,134 @@ theorem polynomial_eq_of_chebyshevCoefficient_eq
   · rw [chebyshevCoord_eq_zero_of_natDegree_lt hp (by omega),
       chebyshevCoord_eq_zero_of_natDegree_lt hq (by omega)]
 
+/-! ## Recovering a kernel from a polynomial -/
+
+/-- The symmetric kernel supported on `[-n, n]` whose entries are the first
+`n + 1` Chebyshev coefficients of `p`. -/
+def kernelOfPolynomial (n : ℕ) (p : ℝ[X]) : Kernel :=
+  Finsupp.onFinset (Finset.Icc (-(n : ℤ)) n)
+    (fun k ↦ if k ∈ Finset.Icc (-(n : ℤ)) n then
+      chebyshevCoefficient p k.natAbs else 0)
+    (by
+      intro k hk
+      by_contra hmem
+      simp [hmem] at hk)
+
+@[simp]
+theorem kernelOfPolynomial_apply (n : ℕ) (p : ℝ[X]) (k : ℤ) :
+    kernelOfPolynomial n p k =
+      if k ∈ Finset.Icc (-(n : ℤ)) n then
+        chebyshevCoefficient p k.natAbs else 0 := by
+  rfl
+
+/-- `kernelOfPolynomial` vanishes outside its prescribed support interval. -/
+theorem kernelOfPolynomial_support
+    (n : ℕ) (p : ℝ[X]) :
+    ∀ k : ℤ, k ∉ Finset.Icc (-(n : ℤ)) n →
+      kernelOfPolynomial n p k = 0 := by
+  intro k hk
+  simp [kernelOfPolynomial_apply, hk]
+
+/-- `kernelOfPolynomial` is symmetric. -/
+theorem kernelOfPolynomial_symmetric
+    (n : ℕ) (p : ℝ[X]) :
+    ∀ k : ℤ, kernelOfPolynomial n p (-k) = kernelOfPolynomial n p k := by
+  intro k
+  rw [kernelOfPolynomial_apply, kernelOfPolynomial_apply]
+  simp only [Int.natAbs_neg]
+  have hmem : -k ∈ Finset.Icc (-(n : ℤ)) n ↔
+      k ∈ Finset.Icc (-(n : ℤ)) n := by
+    simp only [Finset.mem_Icc]
+    omega
+  simp [hmem]
+
+/-- Reconstructing a polynomial of degree at most `n` from its Chebyshev
+coefficients and then taking its kernel polynomial returns the original
+polynomial. -/
+theorem kernelPolynomial_kernelOfPolynomial
+    (n : ℕ) (p : ℝ[X]) (hp : p.natDegree ≤ n) :
+    kernelPolynomial n (kernelOfPolynomial n p) = p := by
+  apply polynomial_eq_of_chebyshevCoefficient_eq
+  · exact kernelPolynomial_natDegree_le n _
+  · exact hp
+  · intro m hm
+    rw [chebyshevCoefficient_kernelPolynomial n m hm]
+    rw [kernelOfPolynomial_apply]
+    have hmem : (m : ℤ) ∈ Finset.Icc (-(n : ℤ)) n := by
+      simp only [Finset.mem_Icc]
+      constructor <;> omega
+    simp [hmem]
+
+/-- A normalized nonnegative polynomial of degree at most `n` gives an
+admissible kernel by taking its Chebyshev coefficients. -/
+theorem kernelOfPolynomial_isAdmissible
+    (n : ℕ)
+    (p : ℝ[X])
+    (hdegree : p.natDegree ≤ n)
+    (hnonnegative : ∀ x ∈ Set.Icc (-1 : ℝ) 1, 0 ≤ p.eval x)
+    (heval_one : p.eval 1 = 1) :
+    IsAdmissibleKernel n (kernelOfPolynomial n p) := by
+  let u := kernelOfPolynomial n p
+  have hsupport := kernelOfPolynomial_support n p
+  have hsymmetric := kernelOfPolynomial_symmetric n p
+  have hpolynomial := kernelPolynomial_kernelOfPolynomial n p hdegree
+  refine ⟨hsupport, hsymmetric, ?_, ?_⟩
+  · have hcos := kernelPolynomial_eval_cos n u hsupport hsymmetric 0
+    rw [hpolynomial, Real.cos_zero, heval_one] at hcos
+    simpa [kernelFourierTransform] using hcos.symm
+  · intro ξ
+    have hcos := kernelPolynomial_eval_cos n u hsupport hsymmetric ξ
+    rw [hpolynomial] at hcos
+    rw [← hcos]
+    exact hnonnegative (Real.cos ξ)
+      ⟨Real.neg_one_le_cos ξ, Real.cos_le_one ξ⟩
+
+/-- Supported symmetric kernels are determined by their kernel polynomials. -/
+theorem kernel_eq_of_kernelPolynomial_eq
+    (n : ℕ)
+    {u v : Kernel}
+    (hu_support : ∀ k : ℤ,
+      k ∉ Finset.Icc (-(n : ℤ)) n → u k = 0)
+    (hu_symmetric : ∀ k : ℤ, u (-k) = u k)
+    (hv_support : ∀ k : ℤ,
+      k ∉ Finset.Icc (-(n : ℤ)) n → v k = 0)
+    (hv_symmetric : ∀ k : ℤ, v (-k) = v k)
+    (hpolynomial : kernelPolynomial n u = kernelPolynomial n v) :
+    u = v := by
+  ext k
+  by_cases hmem : k ∈ Finset.Icc (-(n : ℤ)) n
+  · have hklo : -(n : ℤ) ≤ k := (Finset.mem_Icc.mp hmem).1
+    have hkhi : k ≤ (n : ℤ) := (Finset.mem_Icc.mp hmem).2
+    have habs : k.natAbs ≤ n := by
+      by_cases hk : 0 ≤ k
+      · have hcast : (k.natAbs : ℤ) = k := by
+          rw [Int.natCast_natAbs, abs_of_nonneg hk]
+        rw [← hcast] at hkhi
+        exact_mod_cast hkhi
+      · have hk' : k ≤ 0 := le_of_not_ge hk
+        have hcast : (k.natAbs : ℤ) = -k := by
+          rw [Int.natCast_natAbs, abs_of_nonpos hk']
+        have hbound : -k ≤ (n : ℤ) := by omega
+        rw [← hcast] at hbound
+        exact_mod_cast hbound
+    have hcoefficient : u (k.natAbs : ℕ) = v (k.natAbs : ℕ) := by
+      have h := congrArg
+        (fun p : ℝ[X] ↦ chebyshevCoefficient p k.natAbs) hpolynomial
+      simpa only [chebyshevCoefficient_kernelPolynomial n k.natAbs habs]
+        using h
+    by_cases hk : 0 ≤ k
+    · have hcast : (k.natAbs : ℤ) = k := by
+        rw [Int.natCast_natAbs, abs_of_nonneg hk]
+      simpa [hcast] using hcoefficient
+    · have hk' : k ≤ 0 := le_of_not_ge hk
+      have hcast : (k.natAbs : ℤ) = -k := by
+        rw [Int.natCast_natAbs, abs_of_nonpos hk']
+      calc
+        u k = u (k.natAbs : ℕ) := by
+          simpa [hcast] using hu_symmetric (k.natAbs : ℤ)
+        _ = v (k.natAbs : ℕ) := hcoefficient
+        _ = v k := by
+          simpa [hcast] using (hv_symmetric (k.natAbs : ℤ)).symm
+  · rw [hu_support k hmem, hv_support k hmem]
+
 end JoseSmoothest

@@ -10,6 +10,7 @@ linear operators on `L²(ℤ)`.
 
 * `JoseSmoothest.differenceOperator`: the forward-difference operator.
 * `JoseSmoothest.averagingOperator`: convolution by a finitely supported kernel.
+* `JoseSmoothest.differenceAfterAveraging`: an arbitrary iterated difference after convolution.
 -/
 
 noncomputable section
@@ -23,5 +24,9 @@ def differenceOperator : Sequence →L[ℝ] Sequence :=
 /-- Convolution by `u`, viewed as a bounded operator on `ℓ²(ℤ)`. -/
 def averagingOperator (u : Kernel) : Sequence →L[ℝ] Sequence :=
   u.sum fun k a ↦ a • (translation k).toContinuousLinearMap
+
+/-- The `r`-fold forward difference after convolution by `u`. -/
+def differenceAfterAveraging (r : ℕ) (u : Kernel) : Sequence →L[ℝ] Sequence :=
+  (differenceOperator ^ r).comp (averagingOperator u)
 
 end JoseSmoothest

@@ -11,21 +11,46 @@ the statement, mathematical strategy, and trust boundary understandable.
 
 The project formalizes Theorem 1.4, the paper's first main result, together
 with Proposition 1.6, the polynomial extremal theorem on which its proof
-depends. There are two conclusions:
+depends. The fourth-order development proves four conclusions:
 
 1. every admissible averaging kernel satisfies the paper's
    fourth-difference lower bound;
-2. for an already-admissible kernel, equality is equivalent to the Chebyshev
-   integral formula (1.6) in the paper.
+2. for an admissible kernel, equality is equivalent to the Chebyshev integral
+   formula (1.6) in the paper;
+3. the kernel defined by that coefficient formula is admissible and attains
+   the sharp bound;
+4. this kernel is the unique admissible optimizer.
 
-The formalization does not separately construct the coefficient-defined
-kernel and prove that it is admissible. It therefore proves the lower bound
-and a conditional, at-most-one equality characterization, but not attainment
-of the bound in the original kernel problem. At the supporting polynomial
-level, the extremal polynomial is constructed and its sharpness is proved.
+At the supporting polynomial level, the extremal polynomial is constructed
+and its sharpness and uniqueness are proved. Lean then reconstructs a finite
+symmetric kernel from its Chebyshev coefficients and transports all the
+polynomial properties back to the kernel problem.
 
-The results about other derivative orders, including the sixth-order
-Zolotarev problem, are not part of this formalization.
+There is also a sixth-order development. It reduces the sixth-difference
+operator norm to a cubic weighted polynomial norm and proves sharpness and
+uniqueness from an abstract zero--peak certificate. A second module proves
+that Lebedev's polynomial Pell equation, differential identity, and
+equioscillation data produce that certificate and the same algebraic constant
+as in the paper, in terms of a supplied endpoint parameter `r`. The remaining
+gap is analytic existence: constructing those
+polynomial data from an elliptic modulus `k_N`. Mathlib does not contain that
+theory, and the paper calls `k_N` “the solution” without proving that such a
+solution exists or is unique.
+
+Beyond the paper's stated fourth- and sixth-order results, the reusable
+development now proves the underlying minimization theorem for every even
+difference order.  Given `m ≥ 1` and a support radius `n`, Lean constructs an
+admissible kernel minimizing the norm of `2m` forward differences, proves the
+sharp lower bound, and proves that this kernel is unique.  The sharp constant
+is defined by the unique weighted-polynomial minimizer.  Lean now also gives
+a direct Pell--Abel classification of that minimizer: it extracts a monic
+squarefree polynomial `D`, defines a strictly increasing real phase by an
+explicit integral, proves that the normalized extremizer is a cosine of that
+phase, and proves the exact number of half-turns.  The sharp constant is an
+explicit endpoint coefficient of `D`.  What remains separate is a *forward*
+closed theta/period formula constructing `D` without first constructing the
+minimizer; that is not needed for existence, optimality, or the direct
+classification.
 
 ## The mathematical statement in ordinary language
 
@@ -74,6 +99,11 @@ u(m) = u(-m)
 where `Tₘ` is the degree-`m` Chebyshev polynomial and `Sₙ` is the transformed
 Chebyshev extremal polynomial from the paper.
 
+The formalization also defines the finite symmetric kernel with exactly
+these coefficients, proves all four admissibility conditions, proves that it
+has norm equal to the displayed constant, and proves that any other
+admissible kernel with that norm is equal to it.
+
 ## A 90-second Lean primer
 
 A Lean theorem has typed variables, named hypotheses, and a conclusion. For
@@ -85,7 +115,7 @@ theorem smoothestAverage_inequality
     (n_positive : 0 < n)
     (u : Kernel)
     (admissible : IsAdmissibleKernel n u) :
-    sharpConstant n ≤ fourthOrderSmoothness u := by
+    sharpConstant n ≤ iteratedDifferenceSmoothness 4 u := by
   -- proof
 ```
 
@@ -101,7 +131,7 @@ and admissibility proof allowed by the statement.
 
 ## The exact Lean results
 
-The two main declarations at the paper-facing comparator boundary are:
+The four declarations at the paper-facing comparator boundary are:
 
 ```lean
 theorem smoothestAverage_inequality
@@ -109,24 +139,74 @@ theorem smoothestAverage_inequality
     (n_positive : 0 < n)
     (u : Kernel)
     (admissible : IsAdmissibleKernel n u) :
-    sharpConstant n ≤ fourthOrderSmoothness u
+    sharpConstant n ≤ iteratedDifferenceSmoothness 4 u
 
 theorem smoothestAverage_eq_iff
     (n : ℕ)
     (n_positive : 0 < n)
     (u : Kernel)
     (admissible : IsAdmissibleKernel n u) :
-    fourthOrderSmoothness u = sharpConstant n ↔
+    iteratedDifferenceSmoothness 4 u = sharpConstant n ↔
       IsExtremalKernel n u
+
+theorem smoothestAverage_existsUnique_optimizer
+    (n : ℕ)
+    (n_positive : 0 < n) :
+    ∃! u : Kernel,
+      IsAdmissibleKernel n u ∧
+        iteratedDifferenceSmoothness 4 u = sharpConstant n
+
+theorem sixthDifference_eq_cubicWeightedNorm
+    (n : ℕ)
+    (n_positive : 0 < n)
+    (u : Kernel)
+    (admissible : IsAdmissibleKernel n u) :
+    iteratedDifferenceSmoothness 6 u =
+      8 * cubicWeightedPolynomialNorm (kernelPolynomial n u)
 ```
 
 The symbol `↔` means “if and only if.” Thus, for an already-admissible `u`,
 the coefficient formula implies equality and equality implies the coefficient
-formula. This declaration does not by itself produce such a kernel or prove
-that the coefficient formula satisfies all four admissibility conditions.
-Internally, Lean proves a slightly stronger reusable result: its proof does
-not need `n_positive`, and therefore also covers `n = 0`. The paper-facing
-statement keeps the hypothesis exactly as stated in the theorem.
+formula. The symbol `∃!` means “there exists exactly one.” The third theorem
+makes attainment and uniqueness part of the checked interface, while the
+fourth checks the exact operator-to-polynomial reduction that starts the
+sixth-order development. The internal fourth-order library exposes the
+explicit optimizer as well:
+
+```lean
+def extremalKernel (n : ℕ) : Kernel
+
+theorem extremalKernel_isAdmissible (n : ℕ) :
+    IsAdmissibleKernel n (extremalKernel n)
+
+theorem extremalKernel_attains (n : ℕ) :
+    fourthOrderSmoothness (extremalKernel n) = sharpConstant n
+
+theorem existsUnique_extremalKernel (n : ℕ) :
+    ∃! u : Kernel,
+      IsAdmissibleKernel n u ∧
+        fourthOrderSmoothness u = sharpConstant n
+```
+
+The arbitrary-even-order theorem has the analogous internal interface:
+
+```lean
+theorem existsUnique_smoothestEvenOrderKernel
+    (m n : ℕ) (hm : 1 ≤ m) :
+    ∃! u : Kernel,
+      IsAdmissibleKernel n u ∧
+        differenceSmoothness (2 * m) u =
+          sharpEvenDifferenceConstant m n hm
+```
+
+Companion theorems prove the lower bound for every admissible kernel and show
+that equality is equivalent first to equality of kernel polynomials and then
+to equality with this canonical kernel.
+
+Internally, Lean proves slightly stronger reusable fourth-order results: none
+of those proofs needs `n_positive`, and they therefore also cover `n = 0`.
+The paper-facing comparator statements keep the positive-order hypothesis
+explicit.
 
 ## Translating the objects into Lean
 
@@ -226,6 +306,8 @@ flowchart LR
   D --> E["Sharp weighted Chebyshev problem"]
   E --> F["Lower bound and unique optimizer"]
   F --> G["Chebyshev coefficient formula for u"]
+  G --> H["Construct an admissible extremal kernel"]
+  H --> I["Attainment and uniqueness"]
 ```
 
 ### 1. Package the analytic operators
@@ -280,6 +362,13 @@ The change of variables `x = cos ξ` turns the operator norm into
 Thus the infinite-dimensional operator problem has become a finite-degree
 extremal problem for nonnegative polynomials.
 
+The same file proves the inverse construction needed after solving the
+polynomial problem. Given a polynomial of degree at most `n`, take its first
+`n+1` Chebyshev coefficients and place them symmetrically at the integer
+indices from `-n` to `n`. Reconstructing the polynomial from this kernel gives
+the original polynomial. If the polynomial is normalized and nonnegative on
+`[-1,1]`, the reconstructed kernel is admissible.
+
 ### 4. Solve the weighted polynomial problem
 
 `WeightedExtremal.lean` formalizes Proposition 1.6. It constructs the
@@ -313,13 +402,68 @@ integral
 `Chebyshev.lean` proves this coefficient formula with the correct separate
 normalizations for the zeroth and positive modes. Once the polynomial is
 known to be the unique optimizer, this formula gives exactly the coefficients
-in `IsExtremalKernel`. This proves the conditional equality characterization;
-constructing the resulting kernel and verifying its admissibility remains
-outside the current development.
+in `IsExtremalKernel`.
+
+The formal proof then applies the inverse polynomial-to-kernel construction
+to the weighted optimizer. Polynomial reconstruction proves that its symbol
+is the optimizer, and the optimizer's degree, nonnegativity, and normalization
+prove that the kernel is admissible. The equality characterization proves
+attainment. Finally, supported symmetric kernels are determined by their
+kernel polynomials, so any admissible kernel attaining the bound equals this
+explicit kernel.
 
 Finally, `JoseSmoothest/Challenge.lean` combines the exact Fourier norm, the
-weighted polynomial theorem, and coefficient reconstruction to prove both
-parts of Theorem 1.4.
+weighted polynomial theorem, coefficient reconstruction, and the inverse
+kernel construction to prove the lower bound, equality characterization,
+attainment, and uniqueness in Theorem 1.4.
+
+## The sixth-order property-first extension
+
+For six differences, the Fourier symbol contributes a cubic factor after the
+same substitution `x = cos ξ`. The module `SixthOrder.lean` defines
+
+```text
+sup{|(1-x)³ p(x)| : -1 ≤ x ≤ 1}
+```
+
+and proves that the sixth-difference operator norm is eight times this cubic
+weighted norm. It packages the expected optimizer properties into a
+`CubicZeroPeakCertificate`: a global bound, an attained peak, and enough
+strictly ordered nodes alternating between zero and the peak. From an exact
+cubic factorization and this certificate, Lean proves the candidate's norm,
+the sharp lower bound for every admissible polynomial, and uniqueness of the
+equality case.
+
+It also takes the Chebyshev coefficients of any such certified polynomial to
+construct an admissible finite kernel. The exact factor-eight identity then
+gives a conditional sixth-order lower bound, proves that this kernel attains
+it, and proves that it is the unique admissible attaining kernel.
+
+`Zolotarev.lean` performs the next layer rigorously. Its input is the actual
+mathematical package asserted by Lebedev: real polynomials `Z` and `V`, the
+correctly signed Pell--Abel identity, the differential equation
+`Z' = N (X-1) V`, a nonzero endpoint scale, and the interval
+equioscillation. Lean differentiates the Pell equation to prove `V(1)=0`,
+proves the double criticality of `Z`, computes the third derivative, divides
+`1-Z` by `(1-X)³`, and proves that the quotient has degree at most `N-3`, is
+nonnegative, and equals one at the endpoint. It then constructs the literal
+`CubicZeroPeakCertificate`. The resulting sixth-order constant is
+
+```text
+144 r² / N²,
+```
+
+Here `r` is an abstract input satisfying `H(1)=r²`. It is intended to be the
+ratio `(1-cn(2a))/dn(2a)` from Theorem 1.7, but proving that identification is
+part of the still-missing analytic construction.
+
+This still does not manufacture the input polynomials. `JacobiTheta.lean`
+fixes the theta-function normalization and defines the expressions appearing
+in Lebedev's formula, while carefully making no unsupported claims about
+their zeros, reality, or polynomiality. Completing the unconditional theorem
+requires a new analytic library proving that the theta quotient descends to
+the real polynomials `Z,V`, proving its Pell/differential identities and
+unwrapped-phase equioscillation, and proving existence of `k_N`.
 
 ## Where the proof lives
 
@@ -330,13 +474,21 @@ parts of Theorem 1.4.
 - [`JoseSmoothest/Fourier.lean`](JoseSmoothest/Fourier.lean): the exact
   Fourier multiplier/operator-norm identity.
 - [`JoseSmoothest/Chebyshev.lean`](JoseSmoothest/Chebyshev.lean): the kernel
-  polynomial and coefficient reconstruction.
+  polynomial, coefficient extraction, and inverse polynomial-to-kernel
+  construction.
 - [`JoseSmoothest/Alternation.lean`](JoseSmoothest/Alternation.lean): the
   alternating-sign polynomial uniqueness lemma.
 - [`JoseSmoothest/WeightedExtremal.lean`](JoseSmoothest/WeightedExtremal.lean):
   Proposition 1.6 and its unique optimizer.
 - [`JoseSmoothest/Challenge.lean`](JoseSmoothest/Challenge.lean): the
-  sorry-free assembly of Theorem 1.4.
+  sorry-free assembly of Theorem 1.4, including the unique attaining kernel.
+- [`JoseSmoothest/SixthOrder.lean`](JoseSmoothest/SixthOrder.lean): the exact
+  sixth-order norm reduction and property-first cubic extremal theorem.
+- [`JoseSmoothest/JacobiTheta.lean`](JoseSmoothest/JacobiTheta.lean): the
+  normalized theta expressions used by Lebedev's construction.
+- [`JoseSmoothest/Zolotarev.lean`](JoseSmoothest/Zolotarev.lean): the
+  Pell--Abel endpoint calculation, concrete certificate, paper constant, and
+  conditional unique sixth-order optimizer.
 - [`Showcase.lean`](Showcase.lean): the statement-only comparator interface.
 - [`Solution.lean`](Solution.lean): the comparator solution linked to the
   full proof.
@@ -349,7 +501,7 @@ For declaration-by-declaration natural-language proofs, see the
 The public statement file and the internal theorem file have different jobs:
 
 - the root [`Showcase.lean`](Showcase.lean) fixes the public statements to
-  be checked. Its two theorem bodies are intentional `sorry` placeholders;
+  be checked. Its four theorem bodies are intentional `sorry` placeholders;
   this file is a specification, not the evidence for the result;
 - [`JoseSmoothest/Challenge.lean`](JoseSmoothest/Challenge.lean) belongs to
   the mathematical library and contains complete proofs. It and the root
@@ -371,9 +523,9 @@ similar-looking name.
 
 There is still an important semantic trust boundary. Lean proves the theorem
 that was encoded; readers must still check that definitions such as
-`IsAdmissibleKernel`, `fourthOrderSmoothness`, and `IsExtremalKernel` faithfully
-express the paper's mathematics. The public statements and this explanation
-are intended to make that review possible.
+`IsAdmissibleKernel`, `iteratedDifferenceSmoothness`, and `IsExtremalKernel`
+faithfully express the paper's mathematics. The public statements and this
+explanation are intended to make that review possible.
 
 The formalization was produced with substantial OpenAI Codex assistance and
 has passed Lean builds and comparator checking, but it has not yet received

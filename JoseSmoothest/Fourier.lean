@@ -7,18 +7,22 @@ import Mathlib.MeasureTheory.Measure.Count
 # Fourier representation of finite convolution
 
 This file builds a Fourier equivalence between complex `L²` for counting measure on `ℤ`
-and complex `L²` on the circle. It then identifies the fourth-order convolution norm
-with its scalar multiplier norm.
+and complex `L²` on the circle. It then identifies every iterated-difference convolution
+norm with its scalar multiplier norm.
 
 ## Main definitions
 
 * `JoseSmoothest.kernelFourierTransform`: the real Fourier symbol of a finite kernel.
 * `JoseSmoothest.IsAdmissibleKernel`: the hypotheses on kernels in Theorem 1.4.
+* `JoseSmoothest.differenceSmoothness`: the norm of an iterated difference after averaging.
+* `JoseSmoothest.differenceMultiplierNorm`: the corresponding multiplier supremum.
 * `JoseSmoothest.fourthOrderSmoothness`: the norm of fourth difference after averaging.
 * `JoseSmoothest.fourthOrderMultiplierNorm`: the supremum of the scalar multiplier.
 
 ## Main results
 
+* `JoseSmoothest.differenceSmoothness_eq_multiplierNorm`: the general multiplier identity.
+* `JoseSmoothest.differenceMultiplier_le_smoothness`: the general pointwise multiplier bound.
 * `JoseSmoothest.fourthOrderSmoothness_eq_multiplierNorm`: equation (3.3) of the paper.
 * `JoseSmoothest.fourthOrderMultiplier_le_smoothness`: the pointwise multiplier bound.
 
@@ -26,7 +30,7 @@ with its scalar multiplier norm.
 
 Singleton indicators give a Hilbert basis of complex counting-measure `L²`. Matching this
 basis with Mathlib's Fourier basis produces an isometric equivalence to circle `L²`.
-Translations become multiplication by characters, so finite convolution and fourth
+Translations become multiplication by characters, so finite convolution and every iterated
 difference become multiplication by a continuous symbol. The operator norm of that
 multiplication map is its uniform norm. Finally, complexification preserves the norm of
 the real operator, and symmetry identifies the complex kernel symbol with its real cosine
@@ -74,6 +78,18 @@ theorem fourier_nonnegative {n : ℕ} {u : Kernel} (h : IsAdmissibleKernel n u) 
   h.2.2.2
 
 end IsAdmissibleKernel
+
+/-- The operator norm of the `r`-fold forward difference after convolution by `u`. -/
+def differenceSmoothness (r : ℕ) (u : Kernel) : ℝ :=
+  ‖differenceAfterAveraging r u‖
+
+/-- The modulus of the `r`-fold difference multiplier at frequency `ξ`. -/
+def differenceMultiplier (r : ℕ) (u : Kernel) (ξ : ℝ) : ℝ :=
+  Real.sqrt (2 * (1 - Real.cos ξ)) ^ r * |kernelFourierTransform u ξ|
+
+/-- The supremum of the `r`-fold difference multiplier over all real frequencies. -/
+def differenceMultiplierNorm (r : ℕ) (u : Kernel) : ℝ :=
+  sSup {a : ℝ | ∃ ξ : ℝ, a = differenceMultiplier r u ξ}
 
 /-- The operator norm of `∇⁴` after convolution by `u`. -/
 def fourthOrderSmoothness (u : Kernel) : ℝ :=
@@ -397,8 +413,8 @@ private def complexAveragingOperator (u : Kernel) : ComplexSequence →L[ℂ] Co
 private def kernelCircleSymbol (u : Kernel) : C(AddCircle (2 * Real.pi), ℂ) :=
   u.sum fun k a ↦ (a : ℂ) • fourier k
 
-private def fourthCircleSymbol (u : Kernel) : C(AddCircle (2 * Real.pi), ℂ) :=
-  (fourier (-1) - 1) ^ 4 * kernelCircleSymbol u
+private def orderCircleSymbol (r : ℕ) (u : Kernel) : C(AddCircle (2 * Real.pi), ℂ) :=
+  (fourier (-1) - 1) ^ r * kernelCircleSymbol u
 
 private theorem sequenceFourierEquiv_complexDifference (f : ComplexSequence) :
     sequenceFourierEquiv (complexDifferenceOperator f) =
@@ -448,53 +464,55 @@ private theorem sequenceFourierEquiv_complexDifference_pow (r : ℕ) (f : Comple
           (circleMultiply (fourier (-1) - 1))) (sequenceFourierEquiv f) = _
       rw [← circleMultiply_mul, ← pow_succ]
 
-private def complexFourthOrderOperator (u : Kernel) : ComplexSequence →L[ℂ] ComplexSequence :=
-  (complexDifferenceOperator ^ 4).comp (complexAveragingOperator u)
+private def complexOrderOperator (r : ℕ) (u : Kernel) :
+    ComplexSequence →L[ℂ] ComplexSequence :=
+  (complexDifferenceOperator ^ r).comp (complexAveragingOperator u)
 
-private theorem sequenceFourierEquiv_complexFourthOrder (u : Kernel) (f : ComplexSequence) :
-    sequenceFourierEquiv (complexFourthOrderOperator u f) =
-      circleMultiply (fourthCircleSymbol u) (sequenceFourierEquiv f) := by
-  unfold complexFourthOrderOperator
+private theorem sequenceFourierEquiv_complexOrder
+    (r : ℕ) (u : Kernel) (f : ComplexSequence) :
+    sequenceFourierEquiv (complexOrderOperator r u f) =
+      circleMultiply (orderCircleSymbol r u) (sequenceFourierEquiv f) := by
+  unfold complexOrderOperator
   rw [ContinuousLinearMap.comp_apply]
   rw [sequenceFourierEquiv_complexDifference_pow,
     sequenceFourierEquiv_complexAveraging]
-  change ((circleMultiply ((fourier (-1) - 1) ^ 4)).comp
+  change ((circleMultiply ((fourier (-1) - 1) ^ r)).comp
       (circleMultiply (kernelCircleSymbol u))) (sequenceFourierEquiv f) = _
   rw [← circleMultiply_mul]
   rfl
 
-private theorem complexFourthOrderOperator_norm (u : Kernel) :
-    ‖complexFourthOrderOperator u‖ = ‖fourthCircleSymbol u‖ := by
+private theorem complexOrderOperator_norm (r : ℕ) (u : Kernel) :
+    ‖complexOrderOperator r u‖ = ‖orderCircleSymbol r u‖ := by
   have hforward :
-      ‖complexFourthOrderOperator u‖ ≤ ‖circleMultiply (fourthCircleSymbol u)‖ := by
+      ‖complexOrderOperator r u‖ ≤ ‖circleMultiply (orderCircleSymbol r u)‖ := by
     apply ContinuousLinearMap.opNorm_le_bound _ (norm_nonneg _)
     intro f
     calc
-      ‖complexFourthOrderOperator u f‖ =
-          ‖sequenceFourierEquiv (complexFourthOrderOperator u f)‖ :=
+      ‖complexOrderOperator r u f‖ =
+          ‖sequenceFourierEquiv (complexOrderOperator r u f)‖ :=
         (sequenceFourierEquiv.norm_map _).symm
-      _ = ‖circleMultiply (fourthCircleSymbol u) (sequenceFourierEquiv f)‖ := by
-        rw [sequenceFourierEquiv_complexFourthOrder]
-      _ ≤ ‖circleMultiply (fourthCircleSymbol u)‖ * ‖sequenceFourierEquiv f‖ :=
+      _ = ‖circleMultiply (orderCircleSymbol r u) (sequenceFourierEquiv f)‖ := by
+        rw [sequenceFourierEquiv_complexOrder]
+      _ ≤ ‖circleMultiply (orderCircleSymbol r u)‖ * ‖sequenceFourierEquiv f‖ :=
         ContinuousLinearMap.le_opNorm _ _
-      _ = ‖circleMultiply (fourthCircleSymbol u)‖ * ‖f‖ := by
+      _ = ‖circleMultiply (orderCircleSymbol r u)‖ * ‖f‖ := by
         rw [sequenceFourierEquiv.norm_map]
-  have hbackward : ‖circleMultiply (fourthCircleSymbol u)‖ ≤
-      ‖complexFourthOrderOperator u‖ := by
+  have hbackward : ‖circleMultiply (orderCircleSymbol r u)‖ ≤
+      ‖complexOrderOperator r u‖ := by
     apply ContinuousLinearMap.opNorm_le_bound _ (norm_nonneg _)
     intro g
     let f : ComplexSequence := sequenceFourierEquiv.symm g
     have hFg : sequenceFourierEquiv f = g := sequenceFourierEquiv.apply_symm_apply g
     calc
-      ‖circleMultiply (fourthCircleSymbol u) g‖ =
-          ‖circleMultiply (fourthCircleSymbol u) (sequenceFourierEquiv f)‖ := by rw [hFg]
-      _ = ‖sequenceFourierEquiv (complexFourthOrderOperator u f)‖ := by
-        rw [sequenceFourierEquiv_complexFourthOrder]
-      _ = ‖complexFourthOrderOperator u f‖ := sequenceFourierEquiv.norm_map _
-      _ ≤ ‖complexFourthOrderOperator u‖ * ‖f‖ := ContinuousLinearMap.le_opNorm _ _
-      _ = ‖complexFourthOrderOperator u‖ * ‖g‖ := by
+      ‖circleMultiply (orderCircleSymbol r u) g‖ =
+          ‖circleMultiply (orderCircleSymbol r u) (sequenceFourierEquiv f)‖ := by rw [hFg]
+      _ = ‖sequenceFourierEquiv (complexOrderOperator r u f)‖ := by
+        rw [sequenceFourierEquiv_complexOrder]
+      _ = ‖complexOrderOperator r u f‖ := sequenceFourierEquiv.norm_map _
+      _ ≤ ‖complexOrderOperator r u‖ * ‖f‖ := ContinuousLinearMap.le_opNorm _ _
+      _ = ‖complexOrderOperator r u‖ * ‖g‖ := by
         rw [show ‖f‖ = ‖g‖ from sequenceFourierEquiv.symm.norm_map g]
-  rw [← circleMultiply_norm (fourthCircleSymbol u)]
+  rw [← circleMultiply_norm (orderCircleSymbol r u)]
   exact le_antisymm hforward hbackward
 
 /-! ## Comparison with real `L²`
@@ -610,10 +628,10 @@ private theorem complexDifference_pow_ofReal (r : ℕ) (f : Sequence) :
       rw [pow_succ, mul_apply_eq_comp, complexDifference_ofReal, ih,
         pow_succ, mul_apply_eq_comp]
 
-private theorem complexFourthOrder_ofReal (u : Kernel) (f : Sequence) :
-    complexFourthOrderOperator u (complexOfReal f) =
-      complexOfReal (((differenceOperator ^ 4).comp (averagingOperator u)) f) := by
-  rw [complexFourthOrderOperator, ContinuousLinearMap.comp_apply,
+private theorem complexOrder_ofReal (r : ℕ) (u : Kernel) (f : Sequence) :
+    complexOrderOperator r u (complexOfReal f) =
+      complexOfReal (differenceAfterAveraging r u f) := by
+  rw [complexOrderOperator, differenceAfterAveraging, ContinuousLinearMap.comp_apply,
     complexAveraging_ofReal, complexDifference_pow_ofReal,
     ContinuousLinearMap.comp_apply]
 
@@ -669,12 +687,11 @@ For one inequality, embed real sequences isometrically into complex sequences. F
 other, decompose a complex sequence into real and imaginary parts. The Pythagorean norm
 identity then bounds both components by the norm of the real operator.
 -/
-private theorem fourthOrder_real_complex_norm (u : Kernel) :
-    ‖((differenceOperator ^ 4).comp (averagingOperator u))‖ =
-      ‖complexFourthOrderOperator u‖ := by
+private theorem order_real_complex_norm (r : ℕ) (u : Kernel) :
+    ‖differenceAfterAveraging r u‖ = ‖complexOrderOperator r u‖ := by
   let R : Sequence →L[ℝ] Sequence :=
-    (differenceOperator ^ 4).comp (averagingOperator u)
-  let C : ComplexSequence →L[ℂ] ComplexSequence := complexFourthOrderOperator u
+    differenceAfterAveraging r u
+  let C : ComplexSequence →L[ℂ] ComplexSequence := complexOrderOperator r u
   have hreal_le : ‖R‖ ≤ ‖C‖ := by
     apply ContinuousLinearMap.opNorm_le_bound _ (norm_nonneg _)
     intro f
@@ -682,7 +699,7 @@ private theorem fourthOrder_real_complex_norm (u : Kernel) :
       ‖R f‖ = ‖complexOfReal (R f)‖ := (complexOfReal_norm (R f)).symm
       _ = ‖C (complexOfReal f)‖ := by
         rw [show C (complexOfReal f) = complexOfReal (R f) by
-          simpa [C, R] using complexFourthOrder_ofReal u f]
+          simpa [C, R] using complexOrder_ofReal r u f]
       _ ≤ ‖C‖ * ‖complexOfReal f‖ := ContinuousLinearMap.le_opNorm _ _
       _ = ‖C‖ * ‖f‖ := by rw [complexOfReal_norm]
   have hcomplex_le : ‖C‖ ≤ ‖R‖ := by
@@ -692,9 +709,9 @@ private theorem fourthOrder_real_complex_norm (u : Kernel) :
     let b : Sequence := R (complexIm f)
     have hout : C f = complexOfReal a + Complex.I • complexOfReal b := by
       rw [complex_reconstruction f, map_add, map_smul]
-      change complexFourthOrderOperator u (complexOfReal (complexRe f)) +
-          Complex.I • complexFourthOrderOperator u (complexOfReal (complexIm f)) = _
-      rw [complexFourthOrder_ofReal, complexFourthOrder_ofReal]
+      change complexOrderOperator r u (complexOfReal (complexRe f)) +
+          Complex.I • complexOrderOperator r u (complexOfReal (complexIm f)) = _
+      rw [complexOrder_ofReal, complexOrder_ofReal]
     have hout_re : complexRe (C f) = a := by
       rw [hout, map_add, complexRe_ofReal, complexRe_I_smul_ofReal, add_zero]
     have hout_im : complexIm (C f) = b := by
@@ -830,60 +847,123 @@ private theorem fourier_sub_one_norm_sq (ξ : ℝ) :
   simp [Real.cos_neg]
   ring
 
-private theorem fourthCircleSymbol_norm_coe
+private theorem fourier_sub_one_norm (ξ : ℝ) :
+    ‖fourier (-1) (ξ : AddCircle (2 * Real.pi)) - 1‖ =
+      Real.sqrt (2 * (1 - Real.cos ξ)) := by
+  rw [← Real.sqrt_sq (norm_nonneg _), fourier_sub_one_norm_sq]
+
+/-- The generic smoothness at order four is the original fourth-order quantity. -/
+@[simp]
+theorem differenceSmoothness_four (u : Kernel) :
+    differenceSmoothness 4 u = fourthOrderSmoothness u :=
+  rfl
+
+/-- At even order `2 * m`, the difference weight is a polynomial in `cos ξ`. -/
+theorem differenceMultiplier_two_mul (m : ℕ) (u : Kernel) (ξ : ℝ) :
+    differenceMultiplier (2 * m) u ξ =
+      (2 * (1 - Real.cos ξ)) ^ m * |kernelFourierTransform u ξ| := by
+  have hnonneg : 0 ≤ 2 * (1 - Real.cos ξ) :=
+    mul_nonneg (by norm_num) (sub_nonneg.mpr (Real.cos_le_one ξ))
+  unfold differenceMultiplier
+  rw [pow_mul, Real.sq_sqrt hnonneg]
+
+/-- The generic multiplier at order four is the original fourth-order multiplier. -/
+@[simp]
+theorem differenceMultiplier_four (u : Kernel) (ξ : ℝ) :
+    differenceMultiplier 4 u ξ = fourthOrderMultiplier u ξ := by
+  rw [show (4 : ℕ) = 2 * 2 by norm_num, differenceMultiplier_two_mul]
+  unfold fourthOrderMultiplier
+  ring
+
+/-- At order six, the difference weight is `8 * (1 - cos ξ) ^ 3`. -/
+@[simp]
+theorem differenceMultiplier_six (u : Kernel) (ξ : ℝ) :
+    differenceMultiplier 6 u ξ =
+      8 * (1 - Real.cos ξ) ^ 3 * |kernelFourierTransform u ξ| := by
+  calc
+    differenceMultiplier 6 u ξ =
+        (2 * (1 - Real.cos ξ)) ^ 3 * |kernelFourierTransform u ξ| := by
+      simpa using differenceMultiplier_two_mul 3 u ξ
+    _ = 8 * (1 - Real.cos ξ) ^ 3 * |kernelFourierTransform u ξ| := by ring
+
+/-- The generic multiplier supremum at order four is the original one. -/
+@[simp]
+theorem differenceMultiplierNorm_four (u : Kernel) :
+    differenceMultiplierNorm 4 u = fourthOrderMultiplierNorm u := by
+  unfold differenceMultiplierNorm fourthOrderMultiplierNorm
+  simp only [differenceMultiplier_four]
+
+private theorem orderCircleSymbol_norm_coe
+    (r : ℕ)
     (u : Kernel)
     (symmetric : ∀ k : ℤ, u (-k) = u k)
     (ξ : ℝ) :
-    ‖fourthCircleSymbol u (ξ : AddCircle (2 * Real.pi))‖ =
-      fourthOrderMultiplier u ξ := by
-  have hdiff : ‖fourier (-1) (ξ : AddCircle (2 * Real.pi)) - 1‖ ^ 4 =
-      4 * (1 - Real.cos ξ) ^ 2 := by
-    calc
-      ‖fourier (-1) (ξ : AddCircle (2 * Real.pi)) - 1‖ ^ 4 =
-          (‖fourier (-1) (ξ : AddCircle (2 * Real.pi)) - 1‖ ^ 2) ^ 2 := by ring
-      _ = (2 * (1 - Real.cos ξ)) ^ 2 := by rw [fourier_sub_one_norm_sq]
-      _ = 4 * (1 - Real.cos ξ) ^ 2 := by ring
-  unfold fourthCircleSymbol fourthOrderMultiplier
+    ‖orderCircleSymbol r u (ξ : AddCircle (2 * Real.pi))‖ =
+      differenceMultiplier r u ξ := by
+  unfold orderCircleSymbol differenceMultiplier
   simp only [ContinuousMap.mul_apply, ContinuousMap.pow_apply, ContinuousMap.sub_apply,
     ContinuousMap.one_apply, norm_mul, norm_pow]
-  rw [hdiff, kernelCircleSymbol_eq_real u symmetric, Complex.norm_real, Real.norm_eq_abs]
+  rw [fourier_sub_one_norm, kernelCircleSymbol_eq_real u symmetric,
+    Complex.norm_real, Real.norm_eq_abs]
 
-private theorem fourthCircleSymbol_norm_eq_multiplierNorm
+private theorem orderCircleSymbol_norm_eq_multiplierNorm
+    (r : ℕ)
     (u : Kernel)
     (symmetric : ∀ k : ℤ, u (-k) = u k) :
-    ‖fourthCircleSymbol u‖ = fourthOrderMultiplierNorm u := by
-  unfold fourthOrderMultiplierNorm
-  let S : Set ℝ := {r : ℝ | ∃ ξ : ℝ, r = fourthOrderMultiplier u ξ}
-  have hS_nonempty : S.Nonempty := ⟨fourthOrderMultiplier u 0, 0, rfl⟩
+    ‖orderCircleSymbol r u‖ = differenceMultiplierNorm r u := by
+  unfold differenceMultiplierNorm
+  let S : Set ℝ := {a : ℝ | ∃ ξ : ℝ, a = differenceMultiplier r u ξ}
+  have hS_nonempty : S.Nonempty := ⟨differenceMultiplier r u 0, 0, rfl⟩
   have hS_bdd : BddAbove S := by
-    refine ⟨‖fourthCircleSymbol u‖, ?_⟩
-    rintro r ⟨ξ, rfl⟩
-    rw [← fourthCircleSymbol_norm_coe u symmetric ξ]
-    exact (fourthCircleSymbol u).norm_coe_le_norm (ξ : AddCircle (2 * Real.pi))
-  change ‖fourthCircleSymbol u‖ = sSup S
+    refine ⟨‖orderCircleSymbol r u‖, ?_⟩
+    rintro a ⟨ξ, rfl⟩
+    rw [← orderCircleSymbol_norm_coe r u symmetric ξ]
+    exact (orderCircleSymbol r u).norm_coe_le_norm (ξ : AddCircle (2 * Real.pi))
+  change ‖orderCircleSymbol r u‖ = sSup S
   apply le_antisymm
   · rw [ContinuousMap.norm_eq_iSup_norm]
     apply ciSup_le
     intro x
     refine QuotientAddGroup.induction_on x ?_
     intro ξ
-    rw [fourthCircleSymbol_norm_coe u symmetric ξ]
+    rw [orderCircleSymbol_norm_coe r u symmetric ξ]
     exact le_csSup hS_bdd ⟨ξ, rfl⟩
   · apply csSup_le hS_nonempty
-    rintro r ⟨ξ, rfl⟩
-    rw [← fourthCircleSymbol_norm_coe u symmetric ξ]
-    exact (fourthCircleSymbol u).norm_coe_le_norm (ξ : AddCircle (2 * Real.pi))
+    rintro a ⟨ξ, rfl⟩
+    rw [← orderCircleSymbol_norm_coe r u symmetric ξ]
+    exact (orderCircleSymbol r u).norm_coe_le_norm (ξ : AddCircle (2 * Real.pi))
 
 /-! ## Operator norm identities -/
+
+/-- The norm of the `r`-fold difference after averaging equals its multiplier supremum. -/
+theorem differenceSmoothness_eq_multiplierNorm
+    (r : ℕ)
+    (u : Kernel)
+    (symmetric : ∀ k : ℤ, u (-k) = u k) :
+    differenceSmoothness r u = differenceMultiplierNorm r u := by
+  unfold differenceSmoothness
+  rw [order_real_complex_norm, complexOrderOperator_norm,
+    orderCircleSymbol_norm_eq_multiplierNorm r u symmetric]
+
+/-- Every frequency supplies a lower bound for the iterated-difference operator norm. -/
+theorem differenceMultiplier_le_smoothness
+    (r : ℕ)
+    (u : Kernel)
+    (symmetric : ∀ k : ℤ, u (-k) = u k)
+    (ξ : ℝ) :
+    differenceMultiplier r u ξ ≤ differenceSmoothness r u := by
+  rw [← orderCircleSymbol_norm_coe r u symmetric ξ]
+  unfold differenceSmoothness
+  rw [order_real_complex_norm, complexOrderOperator_norm]
+  exact (orderCircleSymbol r u).norm_coe_le_norm (ξ : AddCircle (2 * Real.pi))
 
 /-- Equation (3.3): the operator norm equals the multiplier supremum. -/
 theorem fourthOrderSmoothness_eq_multiplierNorm
     (u : Kernel)
     (symmetric : ∀ k : ℤ, u (-k) = u k) :
     fourthOrderSmoothness u = fourthOrderMultiplierNorm u := by
-  unfold fourthOrderSmoothness
-  rw [fourthOrder_real_complex_norm, complexFourthOrderOperator_norm,
-    fourthCircleSymbol_norm_eq_multiplierNorm u symmetric]
+  rw [← differenceSmoothness_four, ← differenceMultiplierNorm_four]
+  exact differenceSmoothness_eq_multiplierNorm 4 u symmetric
 
 /-- Every frequency supplies a lower bound for the operator norm. -/
 theorem fourthOrderMultiplier_le_smoothness
@@ -891,9 +971,7 @@ theorem fourthOrderMultiplier_le_smoothness
     (symmetric : ∀ k : ℤ, u (-k) = u k)
     (ξ : ℝ) :
     fourthOrderMultiplier u ξ ≤ fourthOrderSmoothness u := by
-  rw [← fourthCircleSymbol_norm_coe u symmetric ξ]
-  unfold fourthOrderSmoothness
-  rw [fourthOrder_real_complex_norm, complexFourthOrderOperator_norm]
-  exact (fourthCircleSymbol u).norm_coe_le_norm (ξ : AddCircle (2 * Real.pi))
+  rw [← differenceMultiplier_four, ← differenceSmoothness_four]
+  exact differenceMultiplier_le_smoothness 4 u symmetric ξ
 
 end JoseSmoothest
