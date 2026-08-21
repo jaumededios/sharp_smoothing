@@ -77,6 +77,9 @@ The complete statement-first plan for arbitrary even difference order starts
 at [`blueprint/JoseSmoothest/EvenOrder.md`](../blueprint/JoseSmoothest/EvenOrder.md),
 with the reusable analytic prerequisites under
 [`blueprint/JoseSmoothest/SpecialFunctions.md`](../blueprint/JoseSmoothest/SpecialFunctions.md).
+The higher-level mathematical strategy, low-genus milestones, and distinction
+between implicit period and theta-explicit constructions are collected in
+[`HIGHER_DERIVATIVES_ROADMAP.md`](../HIGHER_DERIVATIVES_ROADMAP.md).
 It contains one Markdown file for every planned Lean module, the corrected
 minimal genus `floor ((m-1)/2)` at order `2m`, compact minimizer and necessary
 equioscillation proofs, explicit curve extraction, the odd/even endpoint

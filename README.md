@@ -49,6 +49,9 @@ formal proof follows the mathematics, and what the comparator and Lean kernel
 verify, see [Formalization Explanation](FORMALIZATION_EXPLANATION.md).
 For the engineering audit, refactor summary, and proposed upstream
 contributions, see [Mathlib-Quality Review](MATHLIB_REVIEW.md).
+For the mathematical status and implementation strategy beyond orders four
+and six, see
+[Higher Even Derivatives: Mathematical and Lean Roadmap](HIGHER_DERIVATIVES_ROADMAP.md).
 
 ## Lean Entry Points
 
@@ -84,6 +87,8 @@ The public files separate the statement surface from its proof.
 - `FORMALIZATION_EXPLANATION.md`: a non-technical guide to the statement,
   proof architecture, and trust boundary.
 - `MATHLIB_REVIEW.md`: the code-quality audit and Mathlib extraction plan.
+- `HIGHER_DERIVATIVES_ROADMAP.md`: what is already proved at every even
+  order, and the staged period/theta plan for a forward construction.
 - `formalization.yaml`: provenance, scope, automation, fidelity, and
   source-to-Lean alignment metadata.
 
